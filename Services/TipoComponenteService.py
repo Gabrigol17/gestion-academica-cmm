@@ -2,28 +2,32 @@ from flask import current_app
 
 class TipoComponenteService:
 
-    def add(self, data):
-        db = current_app.db
+    def add(self, nombre_tipo):
+        c = current_app.mysql.connection.cursor()
         query = "INSERT INTO TipoComponente (nombre_tipo) VALUES (%s)"
-        params = (data.get('nombre_tipo'),)
-        return db.execute_query(query, params, commit=True)
+        c.execute(query, (nombre_tipo,))
+        current_app.mysql.connection.commit()
+        c.close()
 
-    def update(self, id_tipo_componente, data):
-        db = current_app.db
+    def read(self):
+        c = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM TipoComponente"
+        c.execute(query)
+        data = c.fetchall()
+        tipos = [dict(zip([column[0] for column in c.description], row)) for row in data]
+        c.close()
+        return tipos
+
+    def update(self, id_tipo_componente, nombre_tipo):
+        c = current_app.mysql.connection.cursor()
         query = "UPDATE TipoComponente SET nombre_tipo = %s WHERE id_tipo_componente = %s"
-        params = (data.get('nombre_tipo'), id_tipo_componente)
-        return db.execute_query(query, params, commit=True)
+        c.execute(query, (nombre_tipo, id_tipo_componente))
+        current_app.mysql.connection.commit()
+        c.close()
 
     def delete(self, id_tipo_componente):
-        db = current_app.db
+        c = current_app.mysql.connection.cursor()
         query = "DELETE FROM TipoComponente WHERE id_tipo_componente = %s"
-        return db.execute_query(query, (id_tipo_componente,), commit=True)
-
-    def read(self, id_tipo_componente=None):
-        db = current_app.db
-        if id_tipo_componente:
-            query = "SELECT * FROM TipoComponente WHERE id_tipo_componente = %s"
-            return db.fetch_one(query, (id_tipo_componente,))
-        else:
-            query = "SELECT * FROM TipoComponente"
-            return db.fetch_all(query)
+        c.execute(query, (id_tipo_componente,))
+        current_app.mysql.connection.commit()
+        c.close()

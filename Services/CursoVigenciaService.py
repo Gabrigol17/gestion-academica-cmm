@@ -2,28 +2,32 @@ from flask import current_app
 
 class CursoVigenciaService:
 
-    def add(self, data):
-        db = current_app.db
+    def add(self, id_curso, id_vigencia):
+        c = current_app.mysql.connection.cursor()
         query = "INSERT INTO CursoVigencia (id_curso, id_vigencia) VALUES (%s, %s)"
-        params = (data.get('id_curso'), data.get('id_vigencia'))
-        return db.execute_query(query, params, commit=True)
+        c.execute(query, (id_curso, id_vigencia))
+        current_app.mysql.connection.commit()
+        c.close()
 
-    def update(self, id_curso_vigencia, data):
-        db = current_app.db
+    def read(self):
+        c = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM CursoVigencia"
+        c.execute(query)
+        data = c.fetchall()
+        cursos_vigencia = [dict(zip([column[0] for column in c.description], row)) for row in data]
+        c.close()
+        return cursos_vigencia
+
+    def update(self, id_curso_vigencia, id_curso, id_vigencia):
+        c = current_app.mysql.connection.cursor()
         query = "UPDATE CursoVigencia SET id_curso = %s, id_vigencia = %s WHERE id_curso_vigencia = %s"
-        params = (data.get('id_curso'), data.get('id_vigencia'), id_curso_vigencia)
-        return db.execute_query(query, params, commit=True)
+        c.execute(query, (id_curso, id_vigencia, id_curso_vigencia))
+        current_app.mysql.connection.commit()
+        c.close()
 
     def delete(self, id_curso_vigencia):
-        db = current_app.db
+        c = current_app.mysql.connection.cursor()
         query = "DELETE FROM CursoVigencia WHERE id_curso_vigencia = %s"
-        return db.execute_query(query, (id_curso_vigencia,), commit=True)
-
-    def read(self, id_curso_vigencia=None):
-        db = current_app.db
-        if id_curso_vigencia:
-            query = "SELECT * FROM CursoVigencia WHERE id_curso_vigencia = %s"
-            return db.fetch_one(query, (id_curso_vigencia,))
-        else:
-            query = "SELECT * FROM CursoVigencia"
-            return db.fetch_all(query)
+        c.execute(query, (id_curso_vigencia,))
+        current_app.mysql.connection.commit()
+        c.close()

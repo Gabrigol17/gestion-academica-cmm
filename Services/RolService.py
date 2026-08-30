@@ -2,28 +2,32 @@ from flask import current_app
 
 class RolService:
 
-    def add(self, data):
-        db = current_app.db
+    def add(self, nombre_rol):
+        c = current_app.mysql.connection.cursor()
         query = "INSERT INTO Rol (nombre_rol) VALUES (%s)"
-        params = (data.get('nombre_rol'),)
-        return db.execute_query(query, params, commit=True)
+        c.execute(query, (nombre_rol,))
+        current_app.mysql.connection.commit()
+        c.close()
 
-    def update(self, id_rol, data):
-        db = current_app.db
+    def read(self):
+        c = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM Rol"
+        c.execute(query)
+        data = c.fetchall()
+        roles = [dict(zip([column[0] for column in c.description], row)) for row in data]
+        c.close()
+        return roles
+
+    def update(self, id_rol, nombre_rol):
+        c = current_app.mysql.connection.cursor()
         query = "UPDATE Rol SET nombre_rol = %s WHERE id_rol = %s"
-        params = (data.get('nombre_rol'), id_rol)
-        return db.execute_query(query, params, commit=True)
+        c.execute(query, (nombre_rol, id_rol))
+        current_app.mysql.connection.commit()
+        c.close()
 
     def delete(self, id_rol):
-        db = current_app.db
+        c = current_app.mysql.connection.cursor()
         query = "DELETE FROM Rol WHERE id_rol = %s"
-        return db.execute_query(query, (id_rol,), commit=True)
-
-    def read(self, id_rol=None):
-        db = current_app.db
-        if id_rol:
-            query = "SELECT * FROM Rol WHERE id_rol = %s"
-            return db.fetch_one(query, (id_rol,))
-        else:
-            query = "SELECT * FROM Rol"
-            return db.fetch_all(query)
+        c.execute(query, (id_rol,))
+        current_app.mysql.connection.commit()
+        c.close()

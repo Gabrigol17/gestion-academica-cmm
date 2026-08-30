@@ -2,28 +2,32 @@ from flask import current_app
 
 class DiaSemanaService:
 
-    def add(self, data):
-        db = current_app.db
+    def add(self, nombre_dia):
+        c = current_app.mysql.connection.cursor()
         query = "INSERT INTO DiaSemana (nombre_dia) VALUES (%s)"
-        params = (data.get('nombre_dia'),)
-        return db.execute_query(query, params, commit=True)
+        c.execute(query, (nombre_dia,))
+        current_app.mysql.connection.commit()
+        c.close()
 
-    def update(self, id_dia, data):
-        db = current_app.db
-        query = "UPDATE DiaSemana SET nombre_dia = %s WHERE id_dia = %s"
-        params = (data.get('nombre_dia'), id_dia)
-        return db.execute_query(query, params, commit=True)
+    def read(self):
+        c = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM DiaSemana"
+        c.execute(query)
+        data = c.fetchall()
+        dias = [dict(zip([column[0] for column in c.description], row)) for row in data]
+        c.close()
+        return dias
 
-    def delete(self, id_dia):
-        db = current_app.db
-        query = "DELETE FROM DiaSemana WHERE id_dia = %s"
-        return db.execute_query(query, (id_dia,), commit=True)
+    def update(self, id_dia_semana, nombre_dia):
+        c = current_app.mysql.connection.cursor()
+        query = "UPDATE DiaSemana SET nombre_dia = %s WHERE id_dia_semana = %s"
+        c.execute(query, (nombre_dia, id_dia_semana))
+        current_app.mysql.connection.commit()
+        c.close()
 
-    def read(self, id_dia=None):
-        db = current_app.db
-        if id_dia:
-            query = "SELECT * FROM DiaSemana WHERE id_dia = %s"
-            return db.fetch_one(query, (id_dia,))
-        else:
-            query = "SELECT * FROM DiaSemana"
-            return db.fetch_all(query)
+    def delete(self, id_dia_semana):
+        c = current_app.mysql.connection.cursor()
+        query = "DELETE FROM DiaSemana WHERE id_dia_semana = %s"
+        c.execute(query, (id_dia_semana,))
+        current_app.mysql.connection.commit()
+        c.close()

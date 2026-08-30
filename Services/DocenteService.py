@@ -2,28 +2,32 @@ from flask import current_app
 
 class DocenteService:
 
-    def add(self, data):
-        db = current_app.db
-        query = "INSERT INTO Docente (id_persona, titulo_academico) VALUES (%s, %s)"
-        params = (data.get('id_persona'), data.get('titulo_academico'))
-        return db.execute_query(query, params, commit=True)
+    def add(self, id_persona):
+        c = current_app.mysql.connection.cursor()
+        query = "INSERT INTO Docente (id_persona) VALUES (%s)"
+        c.execute(query, (id_persona,))
+        current_app.mysql.connection.commit()
+        c.close()
 
-    def update(self, id_docente, data):
-        db = current_app.db
-        query = "UPDATE Docente SET id_persona = %s, titulo_academico = %s WHERE id_docente = %s"
-        params = (data.get('id_persona'), data.get('titulo_academico'), id_docente)
-        return db.execute_query(query, params, commit=True)
+    def read(self):
+        c = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM Docente"
+        c.execute(query)
+        data = c.fetchall()
+        docentes = [dict(zip([column[0] for column in c.description], row)) for row in data]
+        c.close()
+        return docentes
+
+    def update(self, id_docente, id_persona):
+        c = current_app.mysql.connection.cursor()
+        query = "UPDATE Docente SET id_persona = %s WHERE id_docente = %s"
+        c.execute(query, (id_persona, id_docente))
+        current_app.mysql.connection.commit()
+        c.close()
 
     def delete(self, id_docente):
-        db = current_app.db
+        c = current_app.mysql.connection.cursor()
         query = "DELETE FROM Docente WHERE id_docente = %s"
-        return db.execute_query(query, (id_docente,), commit=True)
-
-    def read(self, id_docente=None):
-        db = current_app.db
-        if id_docente:
-            query = "SELECT * FROM Docente WHERE id_docente = %s"
-            return db.fetch_one(query, (id_docente,))
-        else:
-            query = "SELECT * FROM Docente"
-            return db.fetch_all(query)
+        c.execute(query, (id_docente,))
+        current_app.mysql.connection.commit()
+        c.close()

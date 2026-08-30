@@ -2,28 +2,33 @@ from flask import current_app
 
 class CursoService:
 
-    def add(self, data):
-        db = current_app.db
-        query = "INSERT INTO Curso (id_grado, nombre_curso) VALUES (%s, %s)"
-        params = (data.get('id_grado'), data.get('nombre_curso'))
-        return db.execute_query(query, params, commit=True)
+    def add(self, nombre_curso, id_grado):
+        c = current_app.mysql.connection.cursor()
+        query = "INSERT INTO Curso (nombre_curso, id_grado) VALUES (%s, %s)"
+        c.execute(query, (nombre_curso, id_grado))
+        current_app.mysql.connection.commit()
+        c.close()
 
-    def update(self, id_curso, data):
-        db = current_app.db
-        query = "UPDATE Curso SET id_grado = %s, nombre_curso = %s WHERE id_curso = %s"
-        params = (data.get('id_grado'), data.get('nombre_curso'), id_curso)
-        return db.execute_query(query, params, commit=True)
+    def read(self):
+        c = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM Curso"
+        c.execute(query)
+        data = c.fetchall()
+        cursos = [dict(zip([column[0] for column in c.description], row)) for row in data]
+        c.close()
+        return cursos
+
+    def update(self, id_curso, nombre_curso, id_grado):
+        c = current_app.mysql.connection.cursor()
+        query = "UPDATE Curso SET nombre_curso = %s, id_grado = %s WHERE id_curso = %s"
+        c.execute(query, (nombre_curso, id_grado, id_curso))
+        current_app.mysql.connection.commit()
+        c.close()
 
     def delete(self, id_curso):
-        db = current_app.db
+        c = current_app.mysql.connection.cursor()
         query = "DELETE FROM Curso WHERE id_curso = %s"
-        return db.execute_query(query, (id_curso,), commit=True)
+        c.execute(query, (id_curso,))
+        current_app.mysql.connection.commit()
+        c.close()
 
-    def read(self, id_curso=None):
-        db = current_app.db
-        if id_curso:
-            query = "SELECT * FROM Curso WHERE id_curso = %s"
-            return db.fetch_one(query, (id_curso,))
-        else:
-            query = "SELECT * FROM Curso"
-            return db.fetch_all(query)

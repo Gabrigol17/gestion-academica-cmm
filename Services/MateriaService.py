@@ -2,28 +2,32 @@ from flask import current_app
 
 class MateriaService:
 
-    def add(self, data):
-        db = current_app.db
-        query = "INSERT INTO Materia (nombre_materia, descripcion) VALUES (%s, %s)"
-        params = (data.get('nombre_materia'), data.get('descripcion'))
-        return db.execute_query(query, params, commit=True)
+    def add(self, nombre_materia):
+        c = current_app.mysql.connection.cursor()
+        query = "INSERT INTO Materia (nombre_materia) VALUES (%s)"
+        c.execute(query, (nombre_materia,))
+        current_app.mysql.connection.commit()
+        c.close()
 
-    def update(self, id_materia, data):
-        db = current_app.db
-        query = "UPDATE Materia SET nombre_materia = %s, descripcion = %s WHERE id_materia = %s"
-        params = (data.get('nombre_materia'), data.get('descripcion'), id_materia)
-        return db.execute_query(query, params, commit=True)
+    def read(self):
+        c = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM Materia"
+        c.execute(query)
+        data = c.fetchall()
+        materias = [dict(zip([column[0] for column in c.description], row)) for row in data]
+        c.close()
+        return materias
+
+    def update(self, id_materia, nombre_materia):
+        c = current_app.mysql.connection.cursor()
+        query = "UPDATE Materia SET nombre_materia = %s WHERE id_materia = %s"
+        c.execute(query, (nombre_materia, id_materia))
+        current_app.mysql.connection.commit()
+        c.close()
 
     def delete(self, id_materia):
-        db = current_app.db
+        c = current_app.mysql.connection.cursor()
         query = "DELETE FROM Materia WHERE id_materia = %s"
-        return db.execute_query(query, (id_materia,), commit=True)
-
-    def read(self, id_materia=None):
-        db = current_app.db
-        if id_materia:
-            query = "SELECT * FROM Materia WHERE id_materia = %s"
-            return db.fetch_one(query, (id_materia,))
-        else:
-            query = "SELECT * FROM Materia"
-            return db.fetch_all(query)
+        c.execute(query, (id_materia,))
+        current_app.mysql.connection.commit()
+        c.close()
