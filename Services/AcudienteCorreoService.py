@@ -2,33 +2,73 @@ from flask import current_app
 
 class AcudienteCorreoService:
 
-    def add(self, id_acudiente, correo):
-        c = current_app.mysql.connection.cursor()
-        query = "INSERT INTO AcudienteCorreo (id_acudiente, correo) VALUES (%s, %s)"
-        c.execute(query, (id_acudiente, correo))
+    def crear(self, acu_corr_uuid, acu_corr_acu_id, acu_corr_correo):
+        # 1. Abrimos el cursor para conectarnos a MySQL desde Flask
+        cursor = current_app.mysql.connection.cursor()
+        
+        # 2. Definimos la consulta INSERT limpia sin sangría interna
+        query = (
+            "INSERT INTO T_ACUDIENTE_CORREO "
+            "(ACU_CORR_UUID, ACU_CORR_ACU_ID, ACU_CORR_CORREO) "
+            "VALUES (%s, %s, %s)"
+        )
+        
+        # 3. Ejecutamos enviando los valores en una tupla
+        cursor.execute(query, (acu_corr_uuid, acu_corr_acu_id, acu_corr_correo))
+        
+        # 4. Guardamos los cambios permanentemente en la base de datos
         current_app.mysql.connection.commit()
-        c.close()
+        
+        # 5. Cerramos el cursor
+        cursor.close()
 
-    def read(self):
-        c = current_app.mysql.connection.cursor()
-        query = "SELECT * FROM AcudienteCorreo"
-        c.execute(query)
-        data = c.fetchall()
-        correos = [dict(zip([column[0] for column in c.description], row)) for row in data]
-        c.close()
+    def obtener_todos(self):
+        cursor = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM T_ACUDIENTE_CORREO"
+        cursor.execute(query)
+        
+        # fetchall() obtiene todas las filas devueltas
+        data = cursor.fetchall()
+        
+        # Mapeamos las tuplas a diccionarios usando los nombres de las columnas
+        correos = [dict(zip([col[0] for col in cursor.description], row)) for row in data]
+        
+        cursor.close()
         return correos
 
-    def update(self, id_acudiente_correo, id_acudiente, correo):
-        c = current_app.mysql.connection.cursor()
-        query = "UPDATE AcudienteCorreo SET id_acudiente = %s, correo = %s WHERE id_acudiente_correo = %s"
-        c.execute(query, (id_acudiente, correo, id_acudiente_correo))
-        current_app.mysql.connection.commit()
-        c.close()
+    def obtener_por_id(self, acu_corr_id):
+        cursor = current_app.mysql.connection.cursor()
+        # Buscamos filtrando por la clave primaria ACU_CORR_ID
+        query = "SELECT * FROM T_ACUDIENTE_CORREO WHERE ACU_CORR_ID = %s"
+        cursor.execute(query, (acu_corr_id,))
+        
+        # fetchone() recupera una sola coincidencia
+        data = cursor.fetchone()
+        cursor.close()
+        
+        return dict(zip([col[0] for col in cursor.description], data)) if data else None
 
-    def delete(self, id_acudiente_correo):
-        c = current_app.mysql.connection.cursor()
-        query = "DELETE FROM AcudienteCorreo WHERE id_acudiente_correo = %s"
-        c.execute(query, (id_acudiente_correo,))
+    def actualizar(self, acu_corr_id, acu_corr_uuid, acu_corr_acu_id, acu_corr_correo):
+        cursor = current_app.mysql.connection.cursor()
+        # Sentencia UPDATE para actualizar la fila
+        query = (
+            "UPDATE T_ACUDIENTE_CORREO "
+            "SET ACU_CORR_UUID = %s, ACU_CORR_ACU_ID = %s, ACU_CORR_CORREO = %s "
+            "WHERE ACU_CORR_ID = %s"
+        )
+        cursor.execute(query, (acu_corr_uuid, acu_corr_acu_id, acu_corr_correo, acu_corr_id))
+        
+        # Confirmamos los cambios
         current_app.mysql.connection.commit()
-        c.close()
+        cursor.close()
+
+    def eliminar(self, acu_corr_id):
+        cursor = current_app.mysql.connection.cursor()
+        # Sentencia DELETE para remover por ID
+        query = "DELETE FROM T_ACUDIENTE_CORREO WHERE ACU_CORR_ID = %s"
+        cursor.execute(query, (acu_corr_id,))
+        
+        # Confirmamos la eliminación
+        current_app.mysql.connection.commit()
+        cursor.close()
 

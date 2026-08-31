@@ -2,32 +2,64 @@ from flask import current_app
 
 class VigenciaService:
 
-    def add(self, anio):
-        c = current_app.mysql.connection.cursor()
-        query = "INSERT INTO Vigencia (anio) VALUES (%s)"
-        c.execute(query, (anio,))
+    def crear(self, vig_uuid, vig_anio, vig_estado):
+        # 1. Abrimos conexión mediante el cursor
+        cursor = current_app.mysql.connection.cursor()
+        
+        # 2. Registramos la año/vigencia lectiva (Ej: 2026, Activo)
+        query = (
+            "INSERT INTO T_VIGENCIA "
+            "(VIG_UUID, VIG_ANIO, VIG_ESTADO) "
+            "VALUES (%s, %s, %s)"
+        )
+        
+        # 3. Pasamos los datos en tupla
+        cursor.execute(query, (vig_uuid, vig_anio, vig_estado))
+        
+        # 4. Guardamos los cambios
         current_app.mysql.connection.commit()
-        c.close()
+        
+        # 5. Cerramos el cursor
+        cursor.close()
 
-    def read(self):
-        c = current_app.mysql.connection.cursor()
-        query = "SELECT * FROM Vigencia"
-        c.execute(query)
-        data = c.fetchall()
-        vigencias = [dict(zip([column[0] for column in c.description], row)) for row in data]
-        c.close()
+    def obtener_todos(self):
+        cursor = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM T_VIGENCIA"
+        cursor.execute(query)
+        
+        data = cursor.fetchall()
+        vigencias = [dict(zip([col[0] for col in cursor.description], row)) for row in data]
+        cursor.close()
         return vigencias
 
-    def update(self, id_vigencia, anio):
-        c = current_app.mysql.connection.cursor()
-        query = "UPDATE Vigencia SET anio = %s WHERE id_vigencia = %s"
-        c.execute(query, (anio, id_vigencia))
-        current_app.mysql.connection.commit()
-        c.close()
+    def obtener_por_id(self, vig_id):
+        cursor = current_app.mysql.connection.cursor()
+        # Buscamos la vigencia por VIG_ID
+        query = "SELECT * FROM T_VIGENCIA WHERE VIG_ID = %s"
+        cursor.execute(query, (vig_id,))
+        
+        data = cursor.fetchone()
+        cursor.close()
+        return dict(zip([col[0] for col in cursor.description], data)) if data else None
 
-    def delete(self, id_vigencia):
-        c = current_app.mysql.connection.cursor()
-        query = "DELETE FROM Vigencia WHERE id_vigencia = %s"
-        c.execute(query, (id_vigencia,))
+    def actualizar(self, vig_id, vig_uuid, vig_anio, vig_estado):
+        cursor = current_app.mysql.connection.cursor()
+        # Actualizamos el año o estado de la vigencia
+        query = (
+            "UPDATE T_VIGENCIA "
+            "SET VIG_UUID = %s, VIG_ANIO = %s, VIG_ESTADO = %s "
+            "WHERE VIG_ID = %s"
+        )
+        cursor.execute(query, (vig_uuid, vig_anio, vig_estado, vig_id))
+        
         current_app.mysql.connection.commit()
-        c.close()
+        cursor.close()
+
+    def eliminar(self, vig_id):
+        cursor = current_app.mysql.connection.cursor()
+        # Eliminamos el registro de la vigencia
+        query = "DELETE FROM T_VIGENCIA WHERE VIG_ID = %s"
+        cursor.execute(query, (vig_id,))
+        
+        current_app.mysql.connection.commit()
+        cursor.close()

@@ -2,33 +2,65 @@ from flask import current_app
 
 class AcudienteTelefonoService:
 
-    def add(self, id_acudiente, telefono):
-        c = current_app.mysql.connection.cursor()
-        query = "INSERT INTO AcudienteTelefono (id_acudiente, telefono) VALUES (%s, %s)"
-        c.execute(query, (id_acudiente, telefono))
+    def crear(self, acu_tel_uuid, acu_tel_acu_id, acu_tel_numero):
+        # 1. Creamos el cursor de conexión
+        cursor = current_app.mysql.connection.cursor()
+        
+        # 2. Sentencia SQL de inserción
+        query = (
+            "INSERT INTO T_ACUDIENTE_TELEFONO "
+            "(ACU_TEL_UUID, ACU_TEL_ACU_ID, ACU_TEL_NUMERO) "
+            "VALUES (%s, %s, %s)"
+        )
+        
+        # 3. Pasamos los parámetros
+        cursor.execute(query, (acu_tel_uuid, acu_tel_acu_id, acu_tel_numero))
+        
+        # 4. Confirmamos la transacción
         current_app.mysql.connection.commit()
-        c.close()
+        
+        # 5. Cerramos conexión
+        cursor.close()
 
-    def read(self):
-        c = current_app.mysql.connection.cursor()
-        query = "SELECT * FROM AcudienteTelefono"
-        c.execute(query)
-        data = c.fetchall()
-        telefonos = [dict(zip([column[0] for column in c.description], row)) for row in data]
-        c.close()
+    def obtener_todos(self):
+        cursor = current_app.mysql.connection.cursor()
+        query = "SELECT * FROM T_ACUDIENTE_TELEFONO"
+        cursor.execute(query)
+        
+        # Mapeamos los teléfonos registrados
+        data = cursor.fetchall()
+        telefonos = [dict(zip([col[0] for col in cursor.description], row)) for row in data]
+        cursor.close()
         return telefonos
 
-    def update(self, id_acudiente_telefono, id_acudiente, telefono):
-        c = current_app.mysql.connection.cursor()
-        query = "UPDATE AcudienteTelefono SET id_acudiente = %s, telefono = %s WHERE id_acudiente_telefono = %s"
-        c.execute(query, (id_acudiente, telefono, id_acudiente_telefono))
-        current_app.mysql.connection.commit()
-        c.close()
+    def obtener_por_id(self, acu_tel_id):
+        cursor = current_app.mysql.connection.cursor()
+        # Obtenemos el teléfono por su ID
+        query = "SELECT * FROM T_ACUDIENTE_TELEFONO WHERE ACU_TEL_ID = %s"
+        cursor.execute(query, (acu_tel_id,))
+        
+        data = cursor.fetchone()
+        cursor.close()
+        return dict(zip([col[0] for col in cursor.description], data)) if data else None
 
-    def delete(self, id_acudiente_telefono):
-        c = current_app.mysql.connection.cursor()
-        query = "DELETE FROM AcudienteTelefono WHERE id_acudiente_telefono = %s"
-        c.execute(query, (id_acudiente_telefono,))
+    def actualizar(self, acu_tel_id, acu_tel_uuid, acu_tel_acu_id, acu_tel_numero):
+        cursor = current_app.mysql.connection.cursor()
+        # Sentencia UPDATE para actualizar el número telefónico
+        query = (
+            "UPDATE T_ACUDIENTE_TELEFONO "
+            "SET ACU_TEL_UUID = %s, ACU_TEL_ACU_ID = %s, ACU_TEL_NUMERO = %s "
+            "WHERE ACU_TEL_ID = %s"
+        )
+        cursor.execute(query, (acu_tel_uuid, acu_tel_acu_id, acu_tel_numero, acu_tel_id))
+        
         current_app.mysql.connection.commit()
-        c.close()
+        cursor.close()
 
+    def eliminar(self, acu_tel_id):
+        cursor = current_app.mysql.connection.cursor()
+        # Borramos el número telefónico por ID
+        query = "DELETE FROM T_ACUDIENTE_TELEFONO WHERE ACU_TEL_ID = %s"
+        cursor.execute(query, (acu_tel_id,))
+        
+        current_app.mysql.connection.commit()
+        cursor.close()
