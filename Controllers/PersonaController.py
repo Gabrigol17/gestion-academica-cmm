@@ -4,6 +4,12 @@ from Services.PersonaService import PersonaService
 
 class PersonaController:
 
+    CAMPOS_REQUERIDOS = [
+        'PER_TIPO_DOCUMENTO', 'PER_NUMERO_DOCUMENTO', 'PER_PRIMER_NOMBRE',
+        'PER_PRIMER_APELLIDO', 'PER_CORREO_INSTITUCIONAL',
+        'PER_FECHA_NACIMIENTO', 'PER_ROL_ID'
+    ]
+
     def __init__(self):
         self.persona_service = PersonaService()
 
@@ -18,13 +24,8 @@ class PersonaController:
         return jsonify(persona), 200
 
     def crear(self, data):
-        campos_requeridos = [
-            'PER_TIPO_DOCUMENTO', 'PER_NUMERO_DOCUMENTO', 'PER_PRIMER_NOMBRE',
-            'PER_PRIMER_APELLIDO', 'PER_CORREO_INSTITUCIONAL',
-            'PER_FECHA_NACIMIENTO', 'PER_ROL_ID'
-        ]
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Faltan campos requeridos para crear la persona'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.persona_service.crear(
             data['PER_TIPO_DOCUMENTO'],
@@ -40,13 +41,8 @@ class PersonaController:
         return jsonify({'mensaje': 'Persona creada exitosamente'}), 201
 
     def actualizar(self, per_id, data):
-        campos_requeridos = [
-            'PER_TIPO_DOCUMENTO', 'PER_NUMERO_DOCUMENTO', 'PER_PRIMER_NOMBRE',
-            'PER_PRIMER_APELLIDO', 'PER_CORREO_INSTITUCIONAL',
-            'PER_FECHA_NACIMIENTO', 'PER_ROL_ID'
-        ]
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Faltan campos requeridos para actualizar la persona'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         persona = self.persona_service.obtener_por_id(per_id)
         if persona is None:

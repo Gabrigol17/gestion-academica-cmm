@@ -4,6 +4,8 @@ from Services.RolService import RolService
 
 class RolController:
 
+    CAMPOS_REQUERIDOS = ['ROL_NOMBRE']
+
     def __init__(self):
         self.rol_service = RolService()
 
@@ -18,15 +20,15 @@ class RolController:
         return jsonify(rol), 200
 
     def crear(self, data):
-        if not data or 'ROL_NOMBRE' not in data:
-            return jsonify({'mensaje': 'El campo ROL_NOMBRE es requerido'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.rol_service.crear(data['ROL_NOMBRE'])
         return jsonify({'mensaje': 'Rol creado exitosamente'}), 201
 
     def actualizar(self, rol_id, data):
-        if not data or 'ROL_NOMBRE' not in data:
-            return jsonify({'mensaje': 'El campo ROL_NOMBRE es requerido'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         rol = self.rol_service.obtener_por_id(rol_id)
         if rol is None:

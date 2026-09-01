@@ -4,6 +4,8 @@ from Services.ResultadoEvaluativoService import ResultadoEvaluativoService
 
 class ResultadoEvaluativoController:
 
+    CAMPOS_REQUERIDOS = ['RES_EVA_NOTA', 'RES_EVA_AJUSTE', 'RES_EVA_OBSERVACION', 'RES_EVA_MAT_ID', 'RES_EVA_ACT_EVA_ID']
+
     def __init__(self):
         self.resultado_evaluativo_service = ResultadoEvaluativoService()
 
@@ -18,9 +20,8 @@ class ResultadoEvaluativoController:
         return jsonify(resultado), 200
 
     def crear(self, data):
-        campos_requeridos = ['RES_EVA_NOTA', 'RES_EVA_AJUSTE', 'RES_EVA_OBSERVACION', 'RES_EVA_MAT_ID', 'RES_EVA_ACT_EVA_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos RES_EVA_NOTA, RES_EVA_AJUSTE, RES_EVA_OBSERVACION, RES_EVA_MAT_ID y RES_EVA_ACT_EVA_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.resultado_evaluativo_service.crear(
             data['RES_EVA_NOTA'],
@@ -32,9 +33,8 @@ class ResultadoEvaluativoController:
         return jsonify({'mensaje': 'Resultado evaluativo creado exitosamente'}), 201
 
     def actualizar(self, res_eva_id, data):
-        campos_requeridos = ['RES_EVA_NOTA', 'RES_EVA_AJUSTE', 'RES_EVA_OBSERVACION', 'RES_EVA_MAT_ID', 'RES_EVA_ACT_EVA_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos RES_EVA_NOTA, RES_EVA_AJUSTE, RES_EVA_OBSERVACION, RES_EVA_MAT_ID y RES_EVA_ACT_EVA_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         resultado = self.resultado_evaluativo_service.obtener_por_id(res_eva_id)
         if resultado is None:

@@ -4,6 +4,8 @@ from Services.MateriaService import MateriaService
 
 class MateriaController:
 
+    CAMPOS_REQUERIDOS = ['MAT_NOMBRE']
+
     def __init__(self):
         self.materia_service = MateriaService()
 
@@ -18,15 +20,15 @@ class MateriaController:
         return jsonify(materia), 200
 
     def crear(self, data):
-        if not data or 'MAT_NOMBRE' not in data:
-            return jsonify({'mensaje': 'El campo MAT_NOMBRE es requerido'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.materia_service.crear(data['MAT_NOMBRE'])
         return jsonify({'mensaje': 'Materia creada exitosamente'}), 201
 
     def actualizar(self, mat_id, data):
-        if not data or 'MAT_NOMBRE' not in data:
-            return jsonify({'mensaje': 'El campo MAT_NOMBRE es requerido'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         materia = self.materia_service.obtener_por_id(mat_id)
         if materia is None:

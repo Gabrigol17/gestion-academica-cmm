@@ -4,6 +4,8 @@ from Services.MatriculaService import MatriculaService
 
 class MatriculaController:
 
+    CAMPOS_REQUERIDOS = ['MATR_EST_ID', 'MATR_CUR_VIG_ID']
+
     def __init__(self):
         self.matricula_service = MatriculaService()
 
@@ -18,17 +20,15 @@ class MatriculaController:
         return jsonify(matricula), 200
 
     def crear(self, data):
-        campos_requeridos = ['MATR_EST_ID', 'MATR_CUR_VIG_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos MATR_EST_ID y MATR_CUR_VIG_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.matricula_service.crear(data['MATR_EST_ID'], data['MATR_CUR_VIG_ID'])
         return jsonify({'mensaje': 'Matrícula creada exitosamente'}), 201
 
     def actualizar(self, matr_id, data):
-        campos_requeridos = ['MATR_EST_ID', 'MATR_CUR_VIG_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos MATR_EST_ID y MATR_CUR_VIG_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         matricula = self.matricula_service.obtener_por_id(matr_id)
         if matricula is None:

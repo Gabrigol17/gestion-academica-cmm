@@ -4,6 +4,8 @@ from Services.GradoService import GradoService
 
 class GradoController:
 
+    CAMPOS_REQUERIDOS = ['GRAD_NOMBRE', 'GRAD_NIV_EDUC_ID']
+
     def __init__(self):
         self.grado_service = GradoService()
 
@@ -18,17 +20,15 @@ class GradoController:
         return jsonify(grado), 200
 
     def crear(self, data):
-        campos_requeridos = ['GRAD_NOMBRE', 'GRAD_NIV_EDUC_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos GRAD_NOMBRE y GRAD_NIV_EDUC_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.grado_service.crear(data['GRAD_NOMBRE'], data['GRAD_NIV_EDUC_ID'])
         return jsonify({'mensaje': 'Grado creado exitosamente'}), 201
 
     def actualizar(self, grad_id, data):
-        campos_requeridos = ['GRAD_NOMBRE', 'GRAD_NIV_EDUC_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos GRAD_NOMBRE y GRAD_NIV_EDUC_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         grado = self.grado_service.obtener_por_id(grad_id)
         if grado is None:

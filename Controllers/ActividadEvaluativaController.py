@@ -4,6 +4,8 @@ from Services.ActividadEvaluativaService import ActividadEvaluativaService
 
 class ActividadEvaluativaController:
 
+    CAMPOS_REQUERIDOS = ['ACT_EVA_NOMBRE', 'ACT_EVA_DESCRIPCION', 'ACT_EVA_ASIG_ACA_ID', 'ACT_EVA_COM_EVA_ID']
+
     def __init__(self):
         self.actividad_evaluativa_service = ActividadEvaluativaService()
 
@@ -18,9 +20,8 @@ class ActividadEvaluativaController:
         return jsonify(actividad), 200
 
     def crear(self, data):
-        campos_requeridos = ['ACT_EVA_NOMBRE', 'ACT_EVA_DESCRIPCION', 'ACT_EVA_ASIG_ACA_ID', 'ACT_EVA_COM_EVA_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos ACT_EVA_NOMBRE, ACT_EVA_DESCRIPCION, ACT_EVA_ASIG_ACA_ID y ACT_EVA_COM_EVA_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.actividad_evaluativa_service.crear(
             data['ACT_EVA_NOMBRE'],
@@ -31,9 +32,8 @@ class ActividadEvaluativaController:
         return jsonify({'mensaje': 'Actividad evaluativa creada exitosamente'}), 201
 
     def actualizar(self, act_eva_id, data):
-        campos_requeridos = ['ACT_EVA_NOMBRE', 'ACT_EVA_DESCRIPCION', 'ACT_EVA_ASIG_ACA_ID', 'ACT_EVA_COM_EVA_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos ACT_EVA_NOMBRE, ACT_EVA_DESCRIPCION, ACT_EVA_ASIG_ACA_ID y ACT_EVA_COM_EVA_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         actividad = self.actividad_evaluativa_service.obtener_por_id(act_eva_id)
         if actividad is None:

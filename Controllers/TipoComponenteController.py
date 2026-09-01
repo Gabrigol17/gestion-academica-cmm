@@ -4,6 +4,8 @@ from Services.TipoComponenteService import TipoComponenteService
 
 class TipoComponenteController:
 
+    CAMPOS_REQUERIDOS = ['TIPO_COMP_NOMBRE']
+
     def __init__(self):
         self.tipo_componente_service = TipoComponenteService()
 
@@ -18,15 +20,15 @@ class TipoComponenteController:
         return jsonify(tipo), 200
 
     def crear(self, data):
-        if not data or 'TIPO_COMP_NOMBRE' not in data:
-            return jsonify({'mensaje': 'El campo TIPO_COMP_NOMBRE es requerido'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.tipo_componente_service.crear(data['TIPO_COMP_NOMBRE'])
         return jsonify({'mensaje': 'Tipo de componente creado exitosamente'}), 201
 
     def actualizar(self, tipo_comp_id, data):
-        if not data or 'TIPO_COMP_NOMBRE' not in data:
-            return jsonify({'mensaje': 'El campo TIPO_COMP_NOMBRE es requerido'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         tipo = self.tipo_componente_service.obtener_por_id(tipo_comp_id)
         if tipo is None:

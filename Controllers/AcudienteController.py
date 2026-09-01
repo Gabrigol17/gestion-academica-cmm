@@ -4,6 +4,8 @@ from Services.AcudienteService import AcudienteService
 
 class AcudienteController:
 
+    CAMPOS_REQUERIDOS = ['ACU_NOMBRES', 'ACU_APELLIDOS', 'ACU_ESTADO']
+
     def __init__(self):
         self.acudiente_service = AcudienteService()
 
@@ -18,17 +20,15 @@ class AcudienteController:
         return jsonify(acudiente), 200
 
     def crear(self, data):
-        campos_requeridos = ['ACU_NOMBRES', 'ACU_APELLIDOS', 'ACU_ESTADO']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos ACU_NOMBRES, ACU_APELLIDOS y ACU_ESTADO son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.acudiente_service.crear(data['ACU_NOMBRES'], data['ACU_APELLIDOS'], data['ACU_ESTADO'])
         return jsonify({'mensaje': 'Acudiente creado exitosamente'}), 201
 
     def actualizar(self, acu_id, data):
-        campos_requeridos = ['ACU_NOMBRES', 'ACU_APELLIDOS', 'ACU_ESTADO']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos ACU_NOMBRES, ACU_APELLIDOS y ACU_ESTADO son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         acudiente = self.acudiente_service.obtener_por_id(acu_id)
         if acudiente is None:

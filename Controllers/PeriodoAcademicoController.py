@@ -4,6 +4,8 @@ from Services.PeriodoAcademicoService import PeriodoAcademicoService
 
 class PeriodoAcademicoController:
 
+    CAMPOS_REQUERIDOS = ['PER_ACA_NUMERO', 'PER_ACA_FECHA_INICIO', 'PER_ACA_FECHA_FIN', 'PER_ACA_VIG_ID']
+
     def __init__(self):
         self.periodo_academico_service = PeriodoAcademicoService()
 
@@ -18,9 +20,8 @@ class PeriodoAcademicoController:
         return jsonify(periodo), 200
 
     def crear(self, data):
-        campos_requeridos = ['PER_ACA_NUMERO', 'PER_ACA_FECHA_INICIO', 'PER_ACA_FECHA_FIN', 'PER_ACA_VIG_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos PER_ACA_NUMERO, PER_ACA_FECHA_INICIO, PER_ACA_FECHA_FIN y PER_ACA_VIG_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.periodo_academico_service.crear(
             data['PER_ACA_NUMERO'],
@@ -31,9 +32,8 @@ class PeriodoAcademicoController:
         return jsonify({'mensaje': 'Período académico creado exitosamente'}), 201
 
     def actualizar(self, per_aca_id, data):
-        campos_requeridos = ['PER_ACA_NUMERO', 'PER_ACA_FECHA_INICIO', 'PER_ACA_FECHA_FIN', 'PER_ACA_VIG_ID']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos PER_ACA_NUMERO, PER_ACA_FECHA_INICIO, PER_ACA_FECHA_FIN y PER_ACA_VIG_ID son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         periodo = self.periodo_academico_service.obtener_por_id(per_aca_id)
         if periodo is None:

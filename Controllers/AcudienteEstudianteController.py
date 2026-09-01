@@ -4,6 +4,8 @@ from Services.AcudienteEstudianteService import AcudienteEstudianteService
 
 class AcudienteEstudianteController:
 
+    CAMPOS_REQUERIDOS = ['ACU_EST_PARENTESCO', 'ACU_EST_ACU_ID', 'ACU_EST_EST_ID', 'ACU_EST_ESPRINCIPAL']
+
     def __init__(self):
         self.acudiente_estudiante_service = AcudienteEstudianteService()
 
@@ -18,9 +20,8 @@ class AcudienteEstudianteController:
         return jsonify(relacion), 200
 
     def crear(self, data):
-        campos_requeridos = ['ACU_EST_PARENTESCO', 'ACU_EST_ACU_ID', 'ACU_EST_EST_ID', 'ACU_EST_ESPRINCIPAL']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos ACU_EST_PARENTESCO, ACU_EST_ACU_ID, ACU_EST_EST_ID y ACU_EST_ESPRINCIPAL son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         self.acudiente_estudiante_service.crear(
             data['ACU_EST_PARENTESCO'],
@@ -31,9 +32,8 @@ class AcudienteEstudianteController:
         return jsonify({'mensaje': 'Relación acudiente-estudiante creada exitosamente'}), 201
 
     def actualizar(self, acu_est_id, data):
-        campos_requeridos = ['ACU_EST_PARENTESCO', 'ACU_EST_ACU_ID', 'ACU_EST_EST_ID', 'ACU_EST_ESPRINCIPAL']
-        if not data or not all(campo in data for campo in campos_requeridos):
-            return jsonify({'mensaje': 'Los campos ACU_EST_PARENTESCO, ACU_EST_ACU_ID, ACU_EST_EST_ID y ACU_EST_ESPRINCIPAL son requeridos'}), 400
+        if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
+            return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
         relacion = self.acudiente_estudiante_service.obtener_por_id(acu_est_id)
         if relacion is None:
