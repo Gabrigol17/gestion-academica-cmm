@@ -5,7 +5,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    """Configuración base extraída del archivo .env"""
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-    DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
+    # Configuración de la base de datos
+    MYSQL_HOST      = os.getenv('MYSQL_HOST')
+    MYSQL_USER      = os.getenv('MYSQL_USER')
+    MYSQL_PASSWORD  = os.getenv('MYSQL_PASSWORD')
+    MYSQL_DB        = os.getenv('MYSQL_DB')
+    MYSQL_PORT      = int(os.getenv('MYSQL_PORT', 3306)) 
+
+# Esta clase sirve para cargar la configuración de la base 
+# de datos desde un archivo .env y almacenarla en variables de clase.
