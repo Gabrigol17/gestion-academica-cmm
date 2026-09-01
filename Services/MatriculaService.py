@@ -1,66 +1,63 @@
 from flask import current_app
 
+from Models.Matricula import Matricula
+
 class MatriculaService:
 
-    def crear(self, mat_uuid, mat_fecha_matricula, mat_estado, mat_est_id, mat_cur_vig_id):
-        # 1. Abrimos conexión mediante el cursor
+    def crear(self, matr_est_id, matr_cur_vig_id):
         cursor = current_app.mysql.connection.cursor()
-        
-        # 2. Insertamos la matrícula asignando un estudiante a un curso vigencia
+
         query = (
             "INSERT INTO T_MATRICULA "
-            "(MAT_UUID, MAT_FECHA_MATRICULA, MAT_ESTADO, MAT_EST_ID, MAT_CUR_VIG_ID) "
-            "VALUES (%s, %s, %s, %s, %s)"
+            "(MATR_UUID, MATR_EST_ID, MATR_CUR_VIG_ID) "
+            "VALUES (UUID(), %s, %s)"
         )
-        
-        # 3. Ejecutamos la consulta con la tupla
-        cursor.execute(query, (mat_uuid, mat_fecha_matricula, mat_estado, mat_est_id, mat_cur_vig_id))
-        
-        # 4. Guardamos permanentemente los cambios
+
+        cursor.execute(query, (matr_est_id, matr_cur_vig_id))
         current_app.mysql.connection.commit()
-        
-        # 5. Cerramos el cursor
         cursor.close()
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
         query = "SELECT * FROM T_MATRICULA"
         cursor.execute(query)
-        
+
         data = cursor.fetchall()
-        matriculas = [dict(zip([col[0] for col in cursor.description], row)) for row in data]
+
+        matriculas = [Matricula(col[0], col[1], col[2], col[3]).to_dict() for col in data]
+
         cursor.close()
         return matriculas
 
-    def obtener_por_id(self, mat_id):
+    def obtener_por_id(self, matr_id):
         cursor = current_app.mysql.connection.cursor()
-        # Buscamos la matrícula por MAT_ID
-        query = "SELECT * FROM T_MATRICULA WHERE MAT_ID = %s"
-        cursor.execute(query, (mat_id,))
-        
+        query = "SELECT * FROM T_MATRICULA WHERE MATR_ID = %s"
+        cursor.execute(query, (matr_id,))
+
         data = cursor.fetchone()
         cursor.close()
-        return dict(zip([col[0] for col in cursor.description], data)) if data else None
+        if data:
+            matricula = Matricula(data[0], data[1], data[2], data[3]).to_dict()
+            return matricula
+        else:
+            return None
 
-    def actualizar(self, mat_id, mat_uuid, mat_fecha_matricula, mat_estado, mat_est_id, mat_cur_vig_id):
+    def actualizar(self, matr_est_id, matr_cur_vig_id, matr_id):
         cursor = current_app.mysql.connection.cursor()
-        # Actualizamos la matrícula
         query = (
             "UPDATE T_MATRICULA "
-            "SET MAT_UUID = %s, MAT_FECHA_MATRICULA = %s, MAT_ESTADO = %s, "
-            "MAT_EST_ID = %s, MAT_CUR_VIG_ID = %s "
-            "WHERE MAT_ID = %s"
+            "SET MATR_EST_ID = %s, MATR_CUR_VIG_ID = %s "
+            "WHERE MATR_ID = %s"
         )
-        cursor.execute(query, (mat_uuid, mat_fecha_matricula, mat_estado, mat_est_id, mat_cur_vig_id, mat_id))
-        
+        cursor.execute(query, (matr_est_id, matr_cur_vig_id, matr_id))
+
         current_app.mysql.connection.commit()
         cursor.close()
 
-    def eliminar(self, mat_id):
+    def eliminar(self, matr_id):
         cursor = current_app.mysql.connection.cursor()
-        # Eliminamos la matrícula por ID
-        query = "DELETE FROM T_MATRICULA WHERE MAT_ID = %s"
-        cursor.execute(query, (mat_id,))
-        
+        query = "DELETE FROM T_MATRICULA WHERE MATR_ID = %s"
+        cursor.execute(query, (matr_id,))
+
         current_app.mysql.connection.commit()
         cursor.close()

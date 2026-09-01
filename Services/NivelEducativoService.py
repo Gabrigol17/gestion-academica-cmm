@@ -1,65 +1,63 @@
 from flask import current_app
 
+from Models.NivelEducativo import NivelEducativo
+
 class NivelEducativoService:
 
-    def crear(self, niv_edu_uuid, niv_edu_nombre, niv_edu_descripcion):
-        # 1. Abrimos conexión mediante el cursor
+    def crear(self, niv_educ_nombre):
         cursor = current_app.mysql.connection.cursor()
-        
-        # 2. Sentencia para registrar un nivel educativo (Ej: Primaria, Secundaria)
+
         query = (
             "INSERT INTO T_NIVEL_EDUCATIVO "
-            "(NIV_EDU_UUID, NIV_EDU_NOMBRE, NIV_EDU_DESCRIPCION) "
-            "VALUES (%s, %s, %s)"
+            "(NIV_EDUC_NOMBRE) "
+            "VALUES (%s)"
         )
-        
-        # 3. Ejecutamos la consulta
-        cursor.execute(query, (niv_edu_uuid, niv_edu_nombre, niv_edu_descripcion))
-        
-        # 4. Guardamos los cambios
+
+        cursor.execute(query, (niv_educ_nombre,))
         current_app.mysql.connection.commit()
-        
-        # 5. Cerramos el cursor
         cursor.close()
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
         query = "SELECT * FROM T_NIVEL_EDUCATIVO"
         cursor.execute(query)
-        
+
         data = cursor.fetchall()
-        niveles = [dict(zip([col[0] for col in cursor.description], row)) for row in data]
+
+        niveles = [NivelEducativo(col[0], col[1]).to_dict() for col in data]
+
         cursor.close()
         return niveles
 
-    def obtener_por_id(self, niv_edu_id):
+    def obtener_por_id(self, niv_educ_id):
         cursor = current_app.mysql.connection.cursor()
-        # Filtramos el nivel por NIV_EDU_ID
-        query = "SELECT * FROM T_NIVEL_EDUCATIVO WHERE NIV_EDU_ID = %s"
-        cursor.execute(query, (niv_edu_id,))
-        
+        query = "SELECT * FROM T_NIVEL_EDUCATIVO WHERE NIV_EDUC_ID = %s"
+        cursor.execute(query, (niv_educ_id,))
+
         data = cursor.fetchone()
         cursor.close()
-        return dict(zip([col[0] for col in cursor.description], data)) if data else None
+        if data:
+            nivel = NivelEducativo(data[0], data[1]).to_dict()
+            return nivel
+        else:
+            return None
 
-    def actualizar(self, niv_edu_id, niv_edu_uuid, niv_edu_nombre, niv_edu_descripcion):
+    def actualizar(self, niv_educ_nombre, niv_educ_id):
         cursor = current_app.mysql.connection.cursor()
-        # Actualizamos la información del nivel educativo
         query = (
             "UPDATE T_NIVEL_EDUCATIVO "
-            "SET NIV_EDU_UUID = %s, NIV_EDU_NOMBRE = %s, NIV_EDU_DESCRIPCION = %s "
-            "WHERE NIV_EDU_ID = %s"
+            "SET NIV_EDUC_NOMBRE = %s "
+            "WHERE NIV_EDUC_ID = %s"
         )
-        cursor.execute(query, (niv_edu_uuid, niv_edu_nombre, niv_edu_descripcion, niv_edu_id))
-        
+        cursor.execute(query, (niv_educ_nombre, niv_educ_id))
+
         current_app.mysql.connection.commit()
         cursor.close()
 
-    def eliminar(self, niv_edu_id):
+    def eliminar(self, niv_educ_id):
         cursor = current_app.mysql.connection.cursor()
-        # Eliminamos el nivel educativo
-        query = "DELETE FROM T_NIVEL_EDUCATIVO WHERE NIV_EDU_ID = %s"
-        cursor.execute(query, (niv_edu_id,))
-        
+        query = "DELETE FROM T_NIVEL_EDUCATIVO WHERE NIV_EDUC_ID = %s"
+        cursor.execute(query, (niv_educ_id,))
+
         current_app.mysql.connection.commit()
         cursor.close()
