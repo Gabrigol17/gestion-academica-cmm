@@ -23,7 +23,7 @@ from Routes.ResultadoEvaluativoRoute import resultado_evaluativo_bp
 from Routes.DetalleHorarioRoute import detalle_horario_bp
 
 
-def registrar_rutas(app):
+def CargarRutas(app):
     app.register_blueprint(rol_bp)
     app.register_blueprint(persona_bp)
     app.register_blueprint(docente_bp)
