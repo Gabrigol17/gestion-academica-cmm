@@ -11,7 +11,6 @@ from Routes.MateriaRoute import materia_bp
 from Routes.DiaSemanaRoute import dia_semana_bp
 from Routes.NivelEducativoRoute import nivel_educativo_bp
 from Routes.GradoRoute import grado_bp
-from Routes.CursoRoute import curso_bp
 from Routes.CursoVigenciaRoute import curso_vigencia_bp
 from Routes.VigenciaRoute import vigencia_bp
 from Routes.PeriodoAcademicoRoute import periodo_academico_bp
@@ -37,7 +36,6 @@ def CargarRutas(app):
     app.register_blueprint(dia_semana_bp)
     app.register_blueprint(nivel_educativo_bp)
     app.register_blueprint(grado_bp)
-    app.register_blueprint(curso_bp)
     app.register_blueprint(curso_vigencia_bp)
     app.register_blueprint(vigencia_bp)
     app.register_blueprint(periodo_academico_bp)
