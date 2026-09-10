@@ -20,11 +20,11 @@ def crear():
     return curso_vigencia_controller.crear(request.get_json())
 
 
-@curso_vigencia_bp.route('/cursos-vigencia/<int:cur_vig_id>', methods=['PUT'])
-def actualizar(cur_vig_id):
-    return curso_vigencia_controller.actualizar(cur_vig_id, request.get_json())
+@curso_vigencia_bp.route('/cursos-vigencia/<string:cur_vig_uuid>', methods=['PUT'])
+def actualizar(cur_vig_uuid):
+    return curso_vigencia_controller.actualizar(cur_vig_uuid, request.get_json())
 
 
-@curso_vigencia_bp.route('/cursos-vigencia/<int:cur_vig_id>', methods=['DELETE'])
-def eliminar(cur_vig_id):
-    return curso_vigencia_controller.eliminar(cur_vig_id)
+@curso_vigencia_bp.route('/cursos-vigencia/<string:cur_vig_uuid>', methods=['DELETE'])
+def eliminar(cur_vig_uuid):
+    return curso_vigencia_controller.eliminar(cur_vig_uuid)

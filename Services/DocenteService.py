@@ -14,8 +14,13 @@ class DocenteService:
         )
 
         cursor.execute(query, (doc_estado, doc_per_id))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -42,22 +47,28 @@ class DocenteService:
         else:
             return None
 
-    def actualizar(self, doc_estado, doc_per_id, doc_id):
+    def actualizar(self, doc_estado, doc_per_id, doc_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_DOCENTE "
             "SET DOC_ESTADO = %s, DOC_PER_ID = %s "
-            "WHERE DOC_ID = %s"
+            "WHERE DOC_UUID = %s"
         )
-        cursor.execute(query, (doc_estado, doc_per_id, doc_id))
+        cursor.execute(query, (doc_estado, doc_per_id, doc_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, doc_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, doc_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_DOCENTE WHERE DOC_ID = %s"
-        cursor.execute(query, (doc_id,))
+        query = "DELETE FROM T_DOCENTE WHERE DOC_UUID = %s"
+        cursor.execute(query, (doc_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

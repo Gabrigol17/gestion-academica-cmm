@@ -14,8 +14,13 @@ class PeriodoAcademicoService:
         )
 
         cursor.execute(query, (per_aca_numero, per_aca_fecha_inicio, per_aca_fecha_fin, per_aca_vig_id))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -42,23 +47,29 @@ class PeriodoAcademicoService:
         else:
             return None
 
-    def actualizar(self, per_aca_numero, per_aca_fecha_inicio, per_aca_fecha_fin, per_aca_vig_id, per_aca_id):
+    def actualizar(self, per_aca_numero, per_aca_fecha_inicio, per_aca_fecha_fin, per_aca_vig_id, per_aca_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_PERIODO_ACADEMICO "
             "SET PER_ACA_NUMERO = %s, PER_ACA_FECHA_INICIO = %s, "
             "PER_ACA_FECHA_FIN = %s, PER_ACA_VIG_ID = %s "
-            "WHERE PER_ACA_ID = %s"
+            "WHERE PER_ACA_UUID = %s"
         )
-        cursor.execute(query, (per_aca_numero, per_aca_fecha_inicio, per_aca_fecha_fin, per_aca_vig_id, per_aca_id))
+        cursor.execute(query, (per_aca_numero, per_aca_fecha_inicio, per_aca_fecha_fin, per_aca_vig_id, per_aca_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, per_aca_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, per_aca_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_PERIODO_ACADEMICO WHERE PER_ACA_ID = %s"
-        cursor.execute(query, (per_aca_id,))
+        query = "DELETE FROM T_PERIODO_ACADEMICO WHERE PER_ACA_UUID = %s"
+        cursor.execute(query, (per_aca_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

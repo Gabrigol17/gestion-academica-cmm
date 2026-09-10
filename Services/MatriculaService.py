@@ -14,8 +14,13 @@ class MatriculaService:
         )
 
         cursor.execute(query, (matr_est_id, matr_cur_vig_id))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -42,22 +47,28 @@ class MatriculaService:
         else:
             return None
 
-    def actualizar(self, matr_est_id, matr_cur_vig_id, matr_id):
+    def actualizar(self, matr_est_id, matr_cur_vig_id, matr_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_MATRICULA "
             "SET MATR_EST_ID = %s, MATR_CUR_VIG_ID = %s "
-            "WHERE MATR_ID = %s"
+            "WHERE MATR_UUID = %s"
         )
-        cursor.execute(query, (matr_est_id, matr_cur_vig_id, matr_id))
+        cursor.execute(query, (matr_est_id, matr_cur_vig_id, matr_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, matr_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, matr_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_MATRICULA WHERE MATR_ID = %s"
-        cursor.execute(query, (matr_id,))
+        query = "DELETE FROM T_MATRICULA WHERE MATR_UUID = %s"
+        cursor.execute(query, (matr_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

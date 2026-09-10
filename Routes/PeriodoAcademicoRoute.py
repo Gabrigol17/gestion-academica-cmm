@@ -20,11 +20,11 @@ def crear():
     return periodo_academico_controller.crear(request.get_json())
 
 
-@periodo_academico_bp.route('/periodos-academicos/<int:per_aca_id>', methods=['PUT'])
-def actualizar(per_aca_id):
-    return periodo_academico_controller.actualizar(per_aca_id, request.get_json())
+@periodo_academico_bp.route('/periodos-academicos/<string:per_aca_uuid>', methods=['PUT'])
+def actualizar(per_aca_uuid):
+    return periodo_academico_controller.actualizar(per_aca_uuid, request.get_json())
 
 
-@periodo_academico_bp.route('/periodos-academicos/<int:per_aca_id>', methods=['DELETE'])
-def eliminar(per_aca_id):
-    return periodo_academico_controller.eliminar(per_aca_id)
+@periodo_academico_bp.route('/periodos-academicos/<string:per_aca_uuid>', methods=['DELETE'])
+def eliminar(per_aca_uuid):
+    return periodo_academico_controller.eliminar(per_aca_uuid)

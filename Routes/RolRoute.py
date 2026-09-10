@@ -20,11 +20,11 @@ def crear():
     return rol_controller.crear(request.get_json())
 
 
-@rol_bp.route('/roles/<int:rol_id>', methods=['PUT'])
-def actualizar(rol_id):
-    return rol_controller.actualizar(rol_id, request.get_json())
+@rol_bp.route('/roles/<string:rol_uuid>', methods=['PUT'])
+def actualizar(rol_uuid):
+    return rol_controller.actualizar(rol_uuid, request.get_json())
 
 
-@rol_bp.route('/roles/<int:rol_id>', methods=['DELETE'])
-def eliminar(rol_id):
-    return rol_controller.eliminar(rol_id)
+@rol_bp.route('/roles/<string:rol_uuid>', methods=['DELETE'])
+def eliminar(rol_uuid):
+    return rol_controller.eliminar(rol_uuid)

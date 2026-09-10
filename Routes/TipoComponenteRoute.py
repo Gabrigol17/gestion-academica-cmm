@@ -20,11 +20,11 @@ def crear():
     return tipo_componente_controller.crear(request.get_json())
 
 
-@tipo_componente_bp.route('/tipos-componente/<int:tipo_comp_id>', methods=['PUT'])
-def actualizar(tipo_comp_id):
-    return tipo_componente_controller.actualizar(tipo_comp_id, request.get_json())
+@tipo_componente_bp.route('/tipos-componente/<string:tipo_comp_uuid>', methods=['PUT'])
+def actualizar(tipo_comp_uuid):
+    return tipo_componente_controller.actualizar(tipo_comp_uuid, request.get_json())
 
 
-@tipo_componente_bp.route('/tipos-componente/<int:tipo_comp_id>', methods=['DELETE'])
-def eliminar(tipo_comp_id):
-    return tipo_componente_controller.eliminar(tipo_comp_id)
+@tipo_componente_bp.route('/tipos-componente/<string:tipo_comp_uuid>', methods=['DELETE'])
+def eliminar(tipo_comp_uuid):
+    return tipo_componente_controller.eliminar(tipo_comp_uuid)

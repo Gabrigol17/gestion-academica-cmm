@@ -20,11 +20,11 @@ def crear():
     return materia_controller.crear(request.get_json())
 
 
-@materia_bp.route('/materias/<int:mat_id>', methods=['PUT'])
-def actualizar(mat_id):
-    return materia_controller.actualizar(mat_id, request.get_json())
+@materia_bp.route('/materias/<string:mat_uuid>', methods=['PUT'])
+def actualizar(mat_uuid):
+    return materia_controller.actualizar(mat_uuid, request.get_json())
 
 
-@materia_bp.route('/materias/<int:mat_id>', methods=['DELETE'])
-def eliminar(mat_id):
-    return materia_controller.eliminar(mat_id)
+@materia_bp.route('/materias/<string:mat_uuid>', methods=['DELETE'])
+def eliminar(mat_uuid):
+    return materia_controller.eliminar(mat_uuid)

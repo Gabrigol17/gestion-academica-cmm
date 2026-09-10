@@ -20,11 +20,11 @@ def crear():
     return resultado_evaluativo_controller.crear(request.get_json())
 
 
-@resultado_evaluativo_bp.route('/resultados-evaluativos/<int:res_eva_id>', methods=['PUT'])
-def actualizar(res_eva_id):
-    return resultado_evaluativo_controller.actualizar(res_eva_id, request.get_json())
+@resultado_evaluativo_bp.route('/resultados-evaluativos/<string:res_eva_uuid>', methods=['PUT'])
+def actualizar(res_eva_uuid):
+    return resultado_evaluativo_controller.actualizar(res_eva_uuid, request.get_json())
 
 
-@resultado_evaluativo_bp.route('/resultados-evaluativos/<int:res_eva_id>', methods=['DELETE'])
-def eliminar(res_eva_id):
-    return resultado_evaluativo_controller.eliminar(res_eva_id)
+@resultado_evaluativo_bp.route('/resultados-evaluativos/<string:res_eva_uuid>', methods=['DELETE'])
+def eliminar(res_eva_uuid):
+    return resultado_evaluativo_controller.eliminar(res_eva_uuid)

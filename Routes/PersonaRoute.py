@@ -20,11 +20,11 @@ def crear():
     return persona_controller.crear(request.get_json())
 
 
-@persona_bp.route('/personas/<int:per_id>', methods=['PUT'])
-def actualizar(per_id):
-    return persona_controller.actualizar(per_id, request.get_json())
+@persona_bp.route('/personas/<string:per_uuid>', methods=['PUT'])
+def actualizar(per_uuid):
+    return persona_controller.actualizar(per_uuid, request.get_json())
 
 
-@persona_bp.route('/personas/<int:per_id>', methods=['DELETE'])
-def eliminar(per_id):
-    return persona_controller.eliminar(per_id)
+@persona_bp.route('/personas/<string:per_uuid>', methods=['DELETE'])
+def eliminar(per_uuid):
+    return persona_controller.eliminar(per_uuid)

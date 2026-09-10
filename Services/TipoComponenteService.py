@@ -9,13 +9,18 @@ class TipoComponenteService:
 
         query = (
             "INSERT INTO T_TIPO_COMPONENTE "
-            "(TIPO_COMP_NOMBRE) "
-            "VALUES (%s)"
+            "(TIPO_COMP_UUID, TIPO_COMP_NOMBRE) "
+            "VALUES (UUID(), %s)"
         )
 
         cursor.execute(query, (tipo_comp_nombre,))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -24,7 +29,7 @@ class TipoComponenteService:
 
         data = cursor.fetchall()
 
-        tipos = [TipoComponente(col[0], col[1]).to_dict() for col in data]
+        tipos = [TipoComponente(col[0], col[1], col[2]).to_dict() for col in data]
 
         cursor.close()
         return tipos
@@ -37,27 +42,33 @@ class TipoComponenteService:
         data = cursor.fetchone()
         cursor.close()
         if data:
-            tipo = TipoComponente(data[0], data[1]).to_dict()
+            tipo = TipoComponente(data[0], data[1], data[2]).to_dict()
             return tipo
         else:
             return None
 
-    def actualizar(self, tipo_comp_nombre, tipo_comp_id):
+    def actualizar(self, tipo_comp_nombre, tipo_comp_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_TIPO_COMPONENTE "
             "SET TIPO_COMP_NOMBRE = %s "
-            "WHERE TIPO_COMP_ID = %s"
+            "WHERE TIPO_COMP_UUID = %s"
         )
-        cursor.execute(query, (tipo_comp_nombre, tipo_comp_id))
+        cursor.execute(query, (tipo_comp_nombre, tipo_comp_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, tipo_comp_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, tipo_comp_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_TIPO_COMPONENTE WHERE TIPO_COMP_ID = %s"
-        cursor.execute(query, (tipo_comp_id,))
+        query = "DELETE FROM T_TIPO_COMPONENTE WHERE TIPO_COMP_UUID = %s"
+        cursor.execute(query, (tipo_comp_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

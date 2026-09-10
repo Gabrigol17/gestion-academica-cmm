@@ -20,11 +20,11 @@ def crear():
     return matricula_controller.crear(request.get_json())
 
 
-@matricula_bp.route('/matriculas/<int:matr_id>', methods=['PUT'])
-def actualizar(matr_id):
-    return matricula_controller.actualizar(matr_id, request.get_json())
+@matricula_bp.route('/matriculas/<string:matr_uuid>', methods=['PUT'])
+def actualizar(matr_uuid):
+    return matricula_controller.actualizar(matr_uuid, request.get_json())
 
 
-@matricula_bp.route('/matriculas/<int:matr_id>', methods=['DELETE'])
-def eliminar(matr_id):
-    return matricula_controller.eliminar(matr_id)
+@matricula_bp.route('/matriculas/<string:matr_uuid>', methods=['DELETE'])
+def eliminar(matr_uuid):
+    return matricula_controller.eliminar(matr_uuid)

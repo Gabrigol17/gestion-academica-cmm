@@ -14,8 +14,13 @@ class CursoVigenciaService:
         )
 
         cursor.execute(query, (cur_vig_letra, cur_vig_vig_id, cur_vig_grad_id))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -42,22 +47,28 @@ class CursoVigenciaService:
         else:
             return None
 
-    def actualizar(self, cur_vig_letra, cur_vig_vig_id, cur_vig_grad_id, cur_vig_id):
+    def actualizar(self, cur_vig_letra, cur_vig_vig_id, cur_vig_grad_id, cur_vig_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_CURSO_VIGENCIA "
             "SET CUR_VIG_LETRA = %s, CUR_VIG_VIG_ID = %s, CUR_VIG_GRAD_ID = %s "
-            "WHERE CUR_VIG_ID = %s"
+            "WHERE CUR_VIG_UUID = %s"
         )
-        cursor.execute(query, (cur_vig_letra, cur_vig_vig_id, cur_vig_grad_id, cur_vig_id))
+        cursor.execute(query, (cur_vig_letra, cur_vig_vig_id, cur_vig_grad_id, cur_vig_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, cur_vig_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, cur_vig_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_CURSO_VIGENCIA WHERE CUR_VIG_ID = %s"
-        cursor.execute(query, (cur_vig_id,))
+        query = "DELETE FROM T_CURSO_VIGENCIA WHERE CUR_VIG_UUID = %s"
+        cursor.execute(query, (cur_vig_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

@@ -20,11 +20,11 @@ def crear():
     return dia_semana_controller.crear(request.get_json())
 
 
-@dia_semana_bp.route('/dias-semana/<int:dia_sem_id>', methods=['PUT'])
-def actualizar(dia_sem_id):
-    return dia_semana_controller.actualizar(dia_sem_id, request.get_json())
+@dia_semana_bp.route('/dias-semana/<string:dia_sem_uuid>', methods=['PUT'])
+def actualizar(dia_sem_uuid):
+    return dia_semana_controller.actualizar(dia_sem_uuid, request.get_json())
 
 
-@dia_semana_bp.route('/dias-semana/<int:dia_sem_id>', methods=['DELETE'])
-def eliminar(dia_sem_id):
-    return dia_semana_controller.eliminar(dia_sem_id)
+@dia_semana_bp.route('/dias-semana/<string:dia_sem_uuid>', methods=['DELETE'])
+def eliminar(dia_sem_uuid):
+    return dia_semana_controller.eliminar(dia_sem_uuid)

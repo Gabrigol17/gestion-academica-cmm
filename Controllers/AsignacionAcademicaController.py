@@ -23,35 +23,31 @@ class AsignacionAcademicaController:
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        self.asignacion_academica_service.crear(
+        asignacion = self.asignacion_academica_service.crear(
             data['ASIG_ACA_ESTADO'],
             data['ASIG_ACA_DOC_ID'],
             data['ASIG_ACA_MAT_ID'],
             data['ASIG_ACA_CUR_VIG_ID']
         )
-        return jsonify({'mensaje': 'Asignación académica creada exitosamente'}), 201
+        if asignacion is None:
+            return jsonify({'mensaje': 'No se pudo crear la asignación académica'}), 500
+        return jsonify({'mensaje': 'Asignación académica creada exitosamente', 'asignacion_academica': asignacion}), 201
 
-    def actualizar(self, asig_aca_id, data):
+    def actualizar(self, asig_aca_uuid, data):
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        asignacion = self.asignacion_academica_service.obtener_por_id(asig_aca_id)
-        if asignacion is None:
-            return jsonify({'mensaje': 'Asignación académica no encontrada'}), 404
-
-        self.asignacion_academica_service.actualizar(
+        if not self.asignacion_academica_service.actualizar(
             data['ASIG_ACA_ESTADO'],
             data['ASIG_ACA_DOC_ID'],
             data['ASIG_ACA_MAT_ID'],
             data['ASIG_ACA_CUR_VIG_ID'],
-            asig_aca_id
-        )
+            asig_aca_uuid
+        ):
+            return jsonify({'mensaje': 'Asignación académica no encontrada'}), 404
         return jsonify({'mensaje': 'Asignación académica actualizada exitosamente'}), 200
 
-    def eliminar(self, asig_aca_id):
-        asignacion = self.asignacion_academica_service.obtener_por_id(asig_aca_id)
-        if asignacion is None:
+    def eliminar(self, asig_aca_uuid):
+        if not self.asignacion_academica_service.eliminar(asig_aca_uuid):
             return jsonify({'mensaje': 'Asignación académica no encontrada'}), 404
-
-        self.asignacion_academica_service.eliminar(asig_aca_id)
         return jsonify({'mensaje': 'Asignación académica eliminada exitosamente'}), 200

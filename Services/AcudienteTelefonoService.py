@@ -14,8 +14,13 @@ class AcudienteTelefonoService:
         )
 
         cursor.execute(query, (acu_tel_acu_id, acu_tel_numero))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -42,22 +47,28 @@ class AcudienteTelefonoService:
         else:
             return None
 
-    def actualizar(self, acu_tel_acu_id, acu_tel_numero, acu_tel_id):
+    def actualizar(self, acu_tel_acu_id, acu_tel_numero, acu_tel_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_ACUDIENTE_TELEFONO "
             "SET ACU_TEL_ACU_ID = %s, ACU_TEL_NUMERO = %s "
-            "WHERE ACU_TEL_ID = %s"
+            "WHERE ACU_TEL_UUID = %s"
         )
-        cursor.execute(query, (acu_tel_acu_id, acu_tel_numero, acu_tel_id))
+        cursor.execute(query, (acu_tel_acu_id, acu_tel_numero, acu_tel_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, acu_tel_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, acu_tel_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_ACUDIENTE_TELEFONO WHERE ACU_TEL_ID = %s"
-        cursor.execute(query, (acu_tel_id,))
+        query = "DELETE FROM T_ACUDIENTE_TELEFONO WHERE ACU_TEL_UUID = %s"
+        cursor.execute(query, (acu_tel_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

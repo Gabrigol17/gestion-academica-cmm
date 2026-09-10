@@ -14,8 +14,13 @@ class ActividadEvaluativaService:
         )
 
         cursor.execute(query, (act_eva_nombre, act_eva_descripcion, act_eva_asig_aca_id, act_eva_com_eva_id))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
 
     def obtener_todos(self):
@@ -44,7 +49,7 @@ class ActividadEvaluativaService:
         else:
             return None
 
-    def actualizar(self, act_eva_nombre, act_eva_descripcion, act_eva_asig_aca_id, act_eva_com_eva_id, act_eva_id):
+    def actualizar(self, act_eva_nombre, act_eva_descripcion, act_eva_asig_aca_id, act_eva_com_eva_id, act_eva_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
         "UPDATE T_ACTIVIDAD_EVALUATIVA "
@@ -52,20 +57,26 @@ class ActividadEvaluativaService:
         "ACT_EVA_DESCRIPCION = %s, "
         "ACT_EVA_ASIG_ACA_ID = %s, "
         "ACT_EVA_COM_EVA_ID = %s "
-        "WHERE ACT_EVA_ID = %s"
+        "WHERE ACT_EVA_UUID = %s"
     )
-        cursor.execute(query, (act_eva_nombre, act_eva_descripcion, act_eva_asig_aca_id, act_eva_com_eva_id, act_eva_id))
-        
+        cursor.execute(query, (act_eva_nombre, act_eva_descripcion, act_eva_asig_aca_id, act_eva_com_eva_id, act_eva_uuid))
+
         # Confirmamos la actualización en MySQL
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, act_eva_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, act_eva_uuid):
         cursor = current_app.mysql.connection.cursor()
-        # Sentencia DELETE para borrar la fila por su ID
-        query = "DELETE FROM T_ACTIVIDAD_EVALUATIVA WHERE ACT_EVA_ID = %s"
-        cursor.execute(query, (act_eva_id,))
-        
+        # Sentencia DELETE para borrar la fila por su UUID
+        query = "DELETE FROM T_ACTIVIDAD_EVALUATIVA WHERE ACT_EVA_UUID = %s"
+        cursor.execute(query, (act_eva_uuid,))
+
         # Confirmamos la eliminación en la base de datos
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0
