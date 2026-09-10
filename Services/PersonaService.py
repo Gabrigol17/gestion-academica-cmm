@@ -11,7 +11,7 @@ class PersonaService:
             "INSERT INTO T_PERSONA "
             "(PER_UUID, PER_TIPO_DOCUMENTO, PER_NUMERO_DOCUMENTO, PER_PRIMER_NOMBRE, PER_SEGUNDO_NOMBRE, "
             "PER_PRIMER_APELLIDO, PER_SEGUNDO_APELLIDO, PER_CORREO_INSTITUCIONAL, PER_FECHA_NACIMIENTO, PER_ROL_ID) "
-            "VALUES (UUID(), %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
 
         cursor.execute(query, (per_tipo_documento, per_numero_documento, per_primer_nombre, per_segundo_nombre, per_primer_apellido, per_segundo_apellido, per_correo_institucional, per_fecha_nacimiento, per_rol_id))

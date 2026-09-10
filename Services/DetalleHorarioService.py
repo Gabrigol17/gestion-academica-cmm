@@ -10,7 +10,7 @@ class DetalleHorarioService:
         query = (
             "INSERT INTO T_DETALLE_HORARIO "
             "(DET_HOR_UUID, DET_HOR_ASIG_ACA_ID, DET_HOR_DIA_SEM_ID, DET_HOR_HORA_INICIO, DET_HOR_HORA_FIN) "
-            "VALUES (UUID(), %s, %s, %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s, %s, %s)"
         )
 
         cursor.execute(query, (det_hor_asig_aca_id, det_hor_dia_sem_id, det_hor_hora_inicio, det_hor_hora_fin))

@@ -10,7 +10,7 @@ class MatriculaService:
         query = (
             "INSERT INTO T_MATRICULA "
             "(MATR_UUID, MATR_EST_ID, MATR_CUR_VIG_ID) "
-            "VALUES (UUID(), %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s)"
         )
 
         cursor.execute(query, (matr_est_id, matr_cur_vig_id))

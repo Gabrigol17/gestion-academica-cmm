@@ -10,7 +10,7 @@ class NivelEducativoService:
         query = (
             "INSERT INTO T_NIVEL_EDUCATIVO "
             "(NIV_EDUC_UUID, NIV_EDUC_NOMBRE) "
-            "VALUES (UUID(), %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s)"
         )
 
         cursor.execute(query, (niv_educ_nombre,))

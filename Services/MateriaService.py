@@ -10,7 +10,7 @@ class MateriaService:
         query = (
             "INSERT INTO T_MATERIA "
             "(MAT_UUID, MAT_NOMBRE) "
-            "VALUES (UUID(), %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s)"
         )
 
         cursor.execute(query, (mat_nombre,))

@@ -10,7 +10,7 @@ class AsignacionAcademicaService:
         query = (
             "INSERT INTO T_ASIGNACION_ACADEMICA "
             "(ASIG_ACA_UUID, ASIG_ACA_ESTADO, ASIG_ACA_DOC_ID, ASIG_ACA_MAT_ID, ASIG_ACA_CUR_VIG_ID) "
-            "VALUES (UUID(), %s, %s, %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s, %s, %s)"
         )
 
         cursor.execute(query, (asig_aca_estado, asig_aca_doc_id, asig_aca_mat_id, asig_aca_cur_vig_id))

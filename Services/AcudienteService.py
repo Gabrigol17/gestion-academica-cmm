@@ -10,7 +10,7 @@ class AcudienteService:
         query = (
             "INSERT INTO T_ACUDIENTE "
             "(ACU_UUID, ACU_NOMBRES, ACU_APELLIDOS, ACU_ESTADO) "
-            "VALUES (UUID(), %s, %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s, %s)"
         )
 
         cursor.execute(query, (acu_nombres, acu_apellidos, acu_estado))

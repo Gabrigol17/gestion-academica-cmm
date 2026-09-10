@@ -10,7 +10,7 @@ class EstudianteService:
         query = (
             "INSERT INTO T_ESTUDIANTE "
             "(EST_UUID, EST_ESTADO_INSTITUCIONAL, EST_PER_ID) "
-            "VALUES (UUID(), %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s)"
         )
 
         cursor.execute(query, (est_estado_institucional, est_per_id))

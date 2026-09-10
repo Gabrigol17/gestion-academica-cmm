@@ -10,7 +10,7 @@ class RolService:
         query = (
             "INSERT INTO T_ROL "
             "(ROL_UUID, ROL_NOMBRE) "
-            "VALUES (UUID(), %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s)"
         )
 
         cursor.execute(query, (rol_nombre,))

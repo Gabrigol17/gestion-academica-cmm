@@ -10,7 +10,7 @@ class CursoVigenciaService:
         query = (
             "INSERT INTO T_CURSO_VIGENCIA "
             "(CUR_VIG_UUID, CUR_VIG_LETRA, CUR_VIG_VIG_ID, CUR_VIG_GRAD_ID) "
-            "VALUES (UUID(), %s, %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s, %s)"
         )
 
         cursor.execute(query, (cur_vig_letra, cur_vig_vig_id, cur_vig_grad_id))
