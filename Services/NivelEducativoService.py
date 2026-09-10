@@ -9,13 +9,18 @@ class NivelEducativoService:
 
         query = (
             "INSERT INTO T_NIVEL_EDUCATIVO "
-            "(NIV_EDUC_NOMBRE) "
-            "VALUES (%s)"
+            "(NIV_EDUC_UUID, NIV_EDUC_NOMBRE) "
+            "VALUES (UUID(), %s)"
         )
 
         cursor.execute(query, (niv_educ_nombre,))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -24,7 +29,7 @@ class NivelEducativoService:
 
         data = cursor.fetchall()
 
-        niveles = [NivelEducativo(col[0], col[1]).to_dict() for col in data]
+        niveles = [NivelEducativo(col[0], col[1], col[2]).to_dict() for col in data]
 
         cursor.close()
         return niveles
@@ -37,27 +42,33 @@ class NivelEducativoService:
         data = cursor.fetchone()
         cursor.close()
         if data:
-            nivel = NivelEducativo(data[0], data[1]).to_dict()
+            nivel = NivelEducativo(data[0], data[1], data[2]).to_dict()
             return nivel
         else:
             return None
 
-    def actualizar(self, niv_educ_nombre, niv_educ_id):
+    def actualizar(self, niv_educ_nombre, niv_educ_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_NIVEL_EDUCATIVO "
             "SET NIV_EDUC_NOMBRE = %s "
-            "WHERE NIV_EDUC_ID = %s"
+            "WHERE NIV_EDUC_UUID = %s"
         )
-        cursor.execute(query, (niv_educ_nombre, niv_educ_id))
+        cursor.execute(query, (niv_educ_nombre, niv_educ_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, niv_educ_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, niv_educ_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_NIVEL_EDUCATIVO WHERE NIV_EDUC_ID = %s"
-        cursor.execute(query, (niv_educ_id,))
+        query = "DELETE FROM T_NIVEL_EDUCATIVO WHERE NIV_EDUC_UUID = %s"
+        cursor.execute(query, (niv_educ_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

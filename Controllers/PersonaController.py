@@ -27,7 +27,7 @@ class PersonaController:
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        self.persona_service.crear(
+        persona = self.persona_service.crear(
             data['PER_TIPO_DOCUMENTO'],
             data['PER_NUMERO_DOCUMENTO'],
             data['PER_PRIMER_NOMBRE'],
@@ -38,17 +38,15 @@ class PersonaController:
             data['PER_FECHA_NACIMIENTO'],
             data['PER_ROL_ID']
         )
-        return jsonify({'mensaje': 'Persona creada exitosamente'}), 201
+        if persona is None:
+            return jsonify({'mensaje': 'No se pudo crear la persona'}), 500
+        return jsonify({'mensaje': 'Persona creada exitosamente', 'persona': persona}), 201
 
-    def actualizar(self, per_id, data):
+    def actualizar(self, per_uuid, data):
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        persona = self.persona_service.obtener_por_id(per_id)
-        if persona is None:
-            return jsonify({'mensaje': 'Persona no encontrada'}), 404
-
-        self.persona_service.actualizar(
+        if not self.persona_service.actualizar(
             data['PER_TIPO_DOCUMENTO'],
             data['PER_NUMERO_DOCUMENTO'],
             data['PER_PRIMER_NOMBRE'],
@@ -58,14 +56,12 @@ class PersonaController:
             data['PER_CORREO_INSTITUCIONAL'],
             data['PER_FECHA_NACIMIENTO'],
             data['PER_ROL_ID'],
-            per_id
-        )
+            per_uuid
+        ):
+            return jsonify({'mensaje': 'Persona no encontrada'}), 404
         return jsonify({'mensaje': 'Persona actualizada exitosamente'}), 200
 
-    def eliminar(self, per_id):
-        persona = self.persona_service.obtener_por_id(per_id)
-        if persona is None:
+    def eliminar(self, per_uuid):
+        if not self.persona_service.eliminar(per_uuid):
             return jsonify({'mensaje': 'Persona no encontrada'}), 404
-
-        self.persona_service.eliminar(per_id)
         return jsonify({'mensaje': 'Persona eliminada exitosamente'}), 200

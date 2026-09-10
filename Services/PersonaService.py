@@ -15,8 +15,13 @@ class PersonaService:
         )
 
         cursor.execute(query, (per_tipo_documento, per_numero_documento, per_primer_nombre, per_segundo_nombre, per_primer_apellido, per_segundo_apellido, per_correo_institucional, per_fecha_nacimiento, per_rol_id))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -43,7 +48,7 @@ class PersonaService:
         else:
             return None
 
-    def actualizar(self, per_tipo_documento, per_numero_documento, per_primer_nombre, per_segundo_nombre, per_primer_apellido, per_segundo_apellido, per_correo_institucional, per_fecha_nacimiento, per_rol_id, per_id):
+    def actualizar(self, per_tipo_documento, per_numero_documento, per_primer_nombre, per_segundo_nombre, per_primer_apellido, per_segundo_apellido, per_correo_institucional, per_fecha_nacimiento, per_rol_id, per_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_PERSONA "
@@ -51,17 +56,23 @@ class PersonaService:
             "PER_PRIMER_NOMBRE = %s, PER_SEGUNDO_NOMBRE = %s, PER_PRIMER_APELLIDO = %s, "
             "PER_SEGUNDO_APELLIDO = %s, PER_CORREO_INSTITUCIONAL = %s, "
             "PER_FECHA_NACIMIENTO = %s, PER_ROL_ID = %s "
-            "WHERE PER_ID = %s"
+            "WHERE PER_UUID = %s"
         )
-        cursor.execute(query, (per_tipo_documento, per_numero_documento, per_primer_nombre, per_segundo_nombre, per_primer_apellido, per_segundo_apellido, per_correo_institucional, per_fecha_nacimiento, per_rol_id, per_id))
+        cursor.execute(query, (per_tipo_documento, per_numero_documento, per_primer_nombre, per_segundo_nombre, per_primer_apellido, per_segundo_apellido, per_correo_institucional, per_fecha_nacimiento, per_rol_id, per_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, per_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, per_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_PERSONA WHERE PER_ID = %s"
-        cursor.execute(query, (per_id,))
+        query = "DELETE FROM T_PERSONA WHERE PER_UUID = %s"
+        cursor.execute(query, (per_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

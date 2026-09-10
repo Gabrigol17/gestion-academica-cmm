@@ -20,11 +20,11 @@ def crear():
     return detalle_horario_controller.crear(request.get_json())
 
 
-@detalle_horario_bp.route('/detalles-horario/<int:det_hor_id>', methods=['PUT'])
-def actualizar(det_hor_id):
-    return detalle_horario_controller.actualizar(det_hor_id, request.get_json())
+@detalle_horario_bp.route('/detalles-horario/<string:det_hor_uuid>', methods=['PUT'])
+def actualizar(det_hor_uuid):
+    return detalle_horario_controller.actualizar(det_hor_uuid, request.get_json())
 
 
-@detalle_horario_bp.route('/detalles-horario/<int:det_hor_id>', methods=['DELETE'])
-def eliminar(det_hor_id):
-    return detalle_horario_controller.eliminar(det_hor_id)
+@detalle_horario_bp.route('/detalles-horario/<string:det_hor_uuid>', methods=['DELETE'])
+def eliminar(det_hor_uuid):
+    return detalle_horario_controller.eliminar(det_hor_uuid)

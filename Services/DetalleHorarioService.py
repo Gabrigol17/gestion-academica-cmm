@@ -14,8 +14,13 @@ class DetalleHorarioService:
         )
 
         cursor.execute(query, (det_hor_asig_aca_id, det_hor_dia_sem_id, det_hor_hora_inicio, det_hor_hora_fin))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -42,23 +47,29 @@ class DetalleHorarioService:
         else:
             return None
 
-    def actualizar(self, det_hor_asig_aca_id, det_hor_dia_sem_id, det_hor_hora_inicio, det_hor_hora_fin, det_hor_id):
+    def actualizar(self, det_hor_asig_aca_id, det_hor_dia_sem_id, det_hor_hora_inicio, det_hor_hora_fin, det_hor_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_DETALLE_HORARIO "
             "SET DET_HOR_ASIG_ACA_ID = %s, DET_HOR_DIA_SEM_ID = %s, "
             "DET_HOR_HORA_INICIO = %s, DET_HOR_HORA_FIN = %s "
-            "WHERE DET_HOR_ID = %s"
+            "WHERE DET_HOR_UUID = %s"
         )
-        cursor.execute(query, (det_hor_asig_aca_id, det_hor_dia_sem_id, det_hor_hora_inicio, det_hor_hora_fin, det_hor_id))
+        cursor.execute(query, (det_hor_asig_aca_id, det_hor_dia_sem_id, det_hor_hora_inicio, det_hor_hora_fin, det_hor_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, det_hor_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, det_hor_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_DETALLE_HORARIO WHERE DET_HOR_ID = %s"
-        cursor.execute(query, (det_hor_id,))
+        query = "DELETE FROM T_DETALLE_HORARIO WHERE DET_HOR_UUID = %s"
+        cursor.execute(query, (det_hor_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

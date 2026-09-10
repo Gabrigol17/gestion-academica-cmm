@@ -9,13 +9,18 @@ class ComponenteEvaluativoService:
 
         query = (
             "INSERT INTO T_COMPONENTE_EVALUATIVO "
-            "(COM_EVA_PORCENTAJE, COM_EVA_PER_ACA_ID, COM_EVA_TIPO_COMP_ID) "
-            "VALUES (%s, %s, %s)"
+            "(COM_EVA_UUID, COM_EVA_PORCENTAJE, COM_EVA_PER_ACA_ID, COM_EVA_TIPO_COMP_ID) "
+            "VALUES (UUID(), %s, %s, %s)"
         )
 
         cursor.execute(query, (com_eva_porcentaje, com_eva_per_aca_id, com_eva_tipo_comp_id))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -24,7 +29,7 @@ class ComponenteEvaluativoService:
 
         data = cursor.fetchall()
 
-        componentes = [ComponenteEvaluativo(col[0], col[1], col[2], col[3]).to_dict() for col in data]
+        componentes = [ComponenteEvaluativo(col[0], col[1], col[2], col[3], col[4]).to_dict() for col in data]
 
         cursor.close()
         return componentes
@@ -37,27 +42,33 @@ class ComponenteEvaluativoService:
         data = cursor.fetchone()
         cursor.close()
         if data:
-            componente = ComponenteEvaluativo(data[0], data[1], data[2], data[3]).to_dict()
+            componente = ComponenteEvaluativo(data[0], data[1], data[2], data[3], data[4]).to_dict()
             return componente
         else:
             return None
 
-    def actualizar(self, com_eva_porcentaje, com_eva_per_aca_id, com_eva_tipo_comp_id, com_eva_id):
+    def actualizar(self, com_eva_porcentaje, com_eva_per_aca_id, com_eva_tipo_comp_id, com_eva_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_COMPONENTE_EVALUATIVO "
             "SET COM_EVA_PORCENTAJE = %s, COM_EVA_PER_ACA_ID = %s, COM_EVA_TIPO_COMP_ID = %s "
-            "WHERE COM_EVA_ID = %s"
+            "WHERE COM_EVA_UUID = %s"
         )
-        cursor.execute(query, (com_eva_porcentaje, com_eva_per_aca_id, com_eva_tipo_comp_id, com_eva_id))
+        cursor.execute(query, (com_eva_porcentaje, com_eva_per_aca_id, com_eva_tipo_comp_id, com_eva_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, com_eva_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, com_eva_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_COMPONENTE_EVALUATIVO WHERE COM_EVA_ID = %s"
-        cursor.execute(query, (com_eva_id,))
+        query = "DELETE FROM T_COMPONENTE_EVALUATIVO WHERE COM_EVA_UUID = %s"
+        cursor.execute(query, (com_eva_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

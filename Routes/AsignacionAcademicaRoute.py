@@ -20,11 +20,11 @@ def crear():
     return asignacion_academica_controller.crear(request.get_json())
 
 
-@asignacion_academica_bp.route('/asignaciones-academicas/<int:asig_aca_id>', methods=['PUT'])
-def actualizar(asig_aca_id):
-    return asignacion_academica_controller.actualizar(asig_aca_id, request.get_json())
+@asignacion_academica_bp.route('/asignaciones-academicas/<string:asig_aca_uuid>', methods=['PUT'])
+def actualizar(asig_aca_uuid):
+    return asignacion_academica_controller.actualizar(asig_aca_uuid, request.get_json())
 
 
-@asignacion_academica_bp.route('/asignaciones-academicas/<int:asig_aca_id>', methods=['DELETE'])
-def eliminar(asig_aca_id):
-    return asignacion_academica_controller.eliminar(asig_aca_id)
+@asignacion_academica_bp.route('/asignaciones-academicas/<string:asig_aca_uuid>', methods=['DELETE'])
+def eliminar(asig_aca_uuid):
+    return asignacion_academica_controller.eliminar(asig_aca_uuid)

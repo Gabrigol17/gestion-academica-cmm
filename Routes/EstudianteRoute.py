@@ -20,11 +20,11 @@ def crear():
     return estudiante_controller.crear(request.get_json())
 
 
-@estudiante_bp.route('/estudiantes/<int:est_id>', methods=['PUT'])
-def actualizar(est_id):
-    return estudiante_controller.actualizar(est_id, request.get_json())
+@estudiante_bp.route('/estudiantes/<string:est_uuid>', methods=['PUT'])
+def actualizar(est_uuid):
+    return estudiante_controller.actualizar(est_uuid, request.get_json())
 
 
-@estudiante_bp.route('/estudiantes/<int:est_id>', methods=['DELETE'])
-def eliminar(est_id):
-    return estudiante_controller.eliminar(est_id)
+@estudiante_bp.route('/estudiantes/<string:est_uuid>', methods=['DELETE'])
+def eliminar(est_uuid):
+    return estudiante_controller.eliminar(est_uuid)

@@ -9,13 +9,18 @@ class DiaSemanaService:
 
         query = (
             "INSERT INTO T_DIA_SEMANA "
-            "(DIA_SEM_DIA) "
-            "VALUES (%s)"
+            "(DIA_SEM_UUID, DIA_SEM_DIA) "
+            "VALUES (UUID(), %s)"
         )
 
         cursor.execute(query, (dia_sem_dia,))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -24,7 +29,7 @@ class DiaSemanaService:
 
         data = cursor.fetchall()
 
-        dias = [DiaSemana(col[0], col[1]).to_dict() for col in data]
+        dias = [DiaSemana(col[0], col[1], col[2]).to_dict() for col in data]
 
         cursor.close()
         return dias
@@ -37,27 +42,33 @@ class DiaSemanaService:
         data = cursor.fetchone()
         cursor.close()
         if data:
-            dia = DiaSemana(data[0], data[1]).to_dict()
+            dia = DiaSemana(data[0], data[1], data[2]).to_dict()
             return dia
         else:
             return None
 
-    def actualizar(self, dia_sem_dia, dia_sem_id):
+    def actualizar(self, dia_sem_dia, dia_sem_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_DIA_SEMANA "
             "SET DIA_SEM_DIA = %s "
-            "WHERE DIA_SEM_ID = %s"
+            "WHERE DIA_SEM_UUID = %s"
         )
-        cursor.execute(query, (dia_sem_dia, dia_sem_id))
+        cursor.execute(query, (dia_sem_dia, dia_sem_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, dia_sem_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, dia_sem_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_DIA_SEMANA WHERE DIA_SEM_ID = %s"
-        cursor.execute(query, (dia_sem_id,))
+        query = "DELETE FROM T_DIA_SEMANA WHERE DIA_SEM_UUID = %s"
+        cursor.execute(query, (dia_sem_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

@@ -20,11 +20,11 @@ def crear():
     return componente_evaluativo_controller.crear(request.get_json())
 
 
-@componente_evaluativo_bp.route('/componentes-evaluativos/<int:com_eva_id>', methods=['PUT'])
-def actualizar(com_eva_id):
-    return componente_evaluativo_controller.actualizar(com_eva_id, request.get_json())
+@componente_evaluativo_bp.route('/componentes-evaluativos/<string:com_eva_uuid>', methods=['PUT'])
+def actualizar(com_eva_uuid):
+    return componente_evaluativo_controller.actualizar(com_eva_uuid, request.get_json())
 
 
-@componente_evaluativo_bp.route('/componentes-evaluativos/<int:com_eva_id>', methods=['DELETE'])
-def eliminar(com_eva_id):
-    return componente_evaluativo_controller.eliminar(com_eva_id)
+@componente_evaluativo_bp.route('/componentes-evaluativos/<string:com_eva_uuid>', methods=['DELETE'])
+def eliminar(com_eva_uuid):
+    return componente_evaluativo_controller.eliminar(com_eva_uuid)

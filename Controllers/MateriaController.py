@@ -23,24 +23,20 @@ class MateriaController:
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        self.materia_service.crear(data['MAT_NOMBRE'])
-        return jsonify({'mensaje': 'Materia creada exitosamente'}), 201
+        materia = self.materia_service.crear(data['MAT_NOMBRE'])
+        if materia is None:
+            return jsonify({'mensaje': 'No se pudo crear la materia'}), 500
+        return jsonify({'mensaje': 'Materia creada exitosamente', 'materia': materia}), 201
 
-    def actualizar(self, mat_id, data):
+    def actualizar(self, mat_uuid, data):
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        materia = self.materia_service.obtener_por_id(mat_id)
-        if materia is None:
+        if not self.materia_service.actualizar(data['MAT_NOMBRE'], mat_uuid):
             return jsonify({'mensaje': 'Materia no encontrada'}), 404
-
-        self.materia_service.actualizar(data['MAT_NOMBRE'], mat_id)
         return jsonify({'mensaje': 'Materia actualizada exitosamente'}), 200
 
-    def eliminar(self, mat_id):
-        materia = self.materia_service.obtener_por_id(mat_id)
-        if materia is None:
+    def eliminar(self, mat_uuid):
+        if not self.materia_service.eliminar(mat_uuid):
             return jsonify({'mensaje': 'Materia no encontrada'}), 404
-
-        self.materia_service.eliminar(mat_id)
         return jsonify({'mensaje': 'Materia eliminada exitosamente'}), 200

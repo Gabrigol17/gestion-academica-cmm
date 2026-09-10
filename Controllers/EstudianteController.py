@@ -23,24 +23,20 @@ class EstudianteController:
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        self.estudiante_service.crear(data['EST_ESTADO_INSTITUCIONAL'], data['EST_PER_ID'])
-        return jsonify({'mensaje': 'Estudiante creado exitosamente'}), 201
+        estudiante = self.estudiante_service.crear(data['EST_ESTADO_INSTITUCIONAL'], data['EST_PER_ID'])
+        if estudiante is None:
+            return jsonify({'mensaje': 'No se pudo crear el estudiante'}), 500
+        return jsonify({'mensaje': 'Estudiante creado exitosamente', 'estudiante': estudiante}), 201
 
-    def actualizar(self, est_id, data):
+    def actualizar(self, est_uuid, data):
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        estudiante = self.estudiante_service.obtener_por_id(est_id)
-        if estudiante is None:
+        if not self.estudiante_service.actualizar(data['EST_ESTADO_INSTITUCIONAL'], data['EST_PER_ID'], est_uuid):
             return jsonify({'mensaje': 'Estudiante no encontrado'}), 404
-
-        self.estudiante_service.actualizar(data['EST_ESTADO_INSTITUCIONAL'], data['EST_PER_ID'], est_id)
         return jsonify({'mensaje': 'Estudiante actualizado exitosamente'}), 200
 
-    def eliminar(self, est_id):
-        estudiante = self.estudiante_service.obtener_por_id(est_id)
-        if estudiante is None:
+    def eliminar(self, est_uuid):
+        if not self.estudiante_service.eliminar(est_uuid):
             return jsonify({'mensaje': 'Estudiante no encontrado'}), 404
-
-        self.estudiante_service.eliminar(est_id)
         return jsonify({'mensaje': 'Estudiante eliminado exitosamente'}), 200

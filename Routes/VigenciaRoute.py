@@ -20,11 +20,11 @@ def crear():
     return vigencia_controller.crear(request.get_json())
 
 
-@vigencia_bp.route('/vigencias/<int:vig_id>', methods=['PUT'])
-def actualizar(vig_id):
-    return vigencia_controller.actualizar(vig_id, request.get_json())
+@vigencia_bp.route('/vigencias/<string:vig_uuid>', methods=['PUT'])
+def actualizar(vig_uuid):
+    return vigencia_controller.actualizar(vig_uuid, request.get_json())
 
 
-@vigencia_bp.route('/vigencias/<int:vig_id>', methods=['DELETE'])
-def eliminar(vig_id):
-    return vigencia_controller.eliminar(vig_id)
+@vigencia_bp.route('/vigencias/<string:vig_uuid>', methods=['DELETE'])
+def eliminar(vig_uuid):
+    return vigencia_controller.eliminar(vig_uuid)

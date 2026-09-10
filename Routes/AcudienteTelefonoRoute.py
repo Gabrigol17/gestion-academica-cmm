@@ -20,11 +20,11 @@ def crear():
     return acudiente_telefono_controller.crear(request.get_json())
 
 
-@acudiente_telefono_bp.route('/acudientes-telefonos/<int:acu_tel_id>', methods=['PUT'])
-def actualizar(acu_tel_id):
-    return acudiente_telefono_controller.actualizar(acu_tel_id, request.get_json())
+@acudiente_telefono_bp.route('/acudientes-telefonos/<string:acu_tel_uuid>', methods=['PUT'])
+def actualizar(acu_tel_uuid):
+    return acudiente_telefono_controller.actualizar(acu_tel_uuid, request.get_json())
 
 
-@acudiente_telefono_bp.route('/acudientes-telefonos/<int:acu_tel_id>', methods=['DELETE'])
-def eliminar(acu_tel_id):
-    return acudiente_telefono_controller.eliminar(acu_tel_id)
+@acudiente_telefono_bp.route('/acudientes-telefonos/<string:acu_tel_uuid>', methods=['DELETE'])
+def eliminar(acu_tel_uuid):
+    return acudiente_telefono_controller.eliminar(acu_tel_uuid)

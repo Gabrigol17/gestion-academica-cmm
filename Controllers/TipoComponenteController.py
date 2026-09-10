@@ -23,24 +23,20 @@ class TipoComponenteController:
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        self.tipo_componente_service.crear(data['TIPO_COMP_NOMBRE'])
-        return jsonify({'mensaje': 'Tipo de componente creado exitosamente'}), 201
+        tipo = self.tipo_componente_service.crear(data['TIPO_COMP_NOMBRE'])
+        if tipo is None:
+            return jsonify({'mensaje': 'No se pudo crear el tipo de componente'}), 500
+        return jsonify({'mensaje': 'Tipo de componente creado exitosamente', 'tipo_componente': tipo}), 201
 
-    def actualizar(self, tipo_comp_id, data):
+    def actualizar(self, tipo_comp_uuid, data):
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        tipo = self.tipo_componente_service.obtener_por_id(tipo_comp_id)
-        if tipo is None:
+        if not self.tipo_componente_service.actualizar(data['TIPO_COMP_NOMBRE'], tipo_comp_uuid):
             return jsonify({'mensaje': 'Tipo de componente no encontrado'}), 404
-
-        self.tipo_componente_service.actualizar(data['TIPO_COMP_NOMBRE'], tipo_comp_id)
         return jsonify({'mensaje': 'Tipo de componente actualizado exitosamente'}), 200
 
-    def eliminar(self, tipo_comp_id):
-        tipo = self.tipo_componente_service.obtener_por_id(tipo_comp_id)
-        if tipo is None:
+    def eliminar(self, tipo_comp_uuid):
+        if not self.tipo_componente_service.eliminar(tipo_comp_uuid):
             return jsonify({'mensaje': 'Tipo de componente no encontrado'}), 404
-
-        self.tipo_componente_service.eliminar(tipo_comp_id)
         return jsonify({'mensaje': 'Tipo de componente eliminado exitosamente'}), 200

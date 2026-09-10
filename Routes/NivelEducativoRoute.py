@@ -20,11 +20,11 @@ def crear():
     return nivel_educativo_controller.crear(request.get_json())
 
 
-@nivel_educativo_bp.route('/niveles-educativos/<int:niv_educ_id>', methods=['PUT'])
-def actualizar(niv_educ_id):
-    return nivel_educativo_controller.actualizar(niv_educ_id, request.get_json())
+@nivel_educativo_bp.route('/niveles-educativos/<string:niv_educ_uuid>', methods=['PUT'])
+def actualizar(niv_educ_uuid):
+    return nivel_educativo_controller.actualizar(niv_educ_uuid, request.get_json())
 
 
-@nivel_educativo_bp.route('/niveles-educativos/<int:niv_educ_id>', methods=['DELETE'])
-def eliminar(niv_educ_id):
-    return nivel_educativo_controller.eliminar(niv_educ_id)
+@nivel_educativo_bp.route('/niveles-educativos/<string:niv_educ_uuid>', methods=['DELETE'])
+def eliminar(niv_educ_uuid):
+    return nivel_educativo_controller.eliminar(niv_educ_uuid)

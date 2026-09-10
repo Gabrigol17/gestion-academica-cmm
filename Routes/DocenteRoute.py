@@ -20,11 +20,11 @@ def crear():
     return docente_controller.crear(request.get_json())
 
 
-@docente_bp.route('/docentes/<int:doc_id>', methods=['PUT'])
-def actualizar(doc_id):
-    return docente_controller.actualizar(doc_id, request.get_json())
+@docente_bp.route('/docentes/<string:doc_uuid>', methods=['PUT'])
+def actualizar(doc_uuid):
+    return docente_controller.actualizar(doc_uuid, request.get_json())
 
 
-@docente_bp.route('/docentes/<int:doc_id>', methods=['DELETE'])
-def eliminar(doc_id):
-    return docente_controller.eliminar(doc_id)
+@docente_bp.route('/docentes/<string:doc_uuid>', methods=['DELETE'])
+def eliminar(doc_uuid):
+    return docente_controller.eliminar(doc_uuid)

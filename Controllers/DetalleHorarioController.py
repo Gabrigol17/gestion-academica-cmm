@@ -23,35 +23,31 @@ class DetalleHorarioController:
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        self.detalle_horario_service.crear(
+        horario = self.detalle_horario_service.crear(
             data['DET_HOR_ASIG_ACA_ID'],
             data['DET_HOR_DIA_SEM_ID'],
             data['DET_HOR_HORA_INICIO'],
             data['DET_HOR_HORA_FIN']
         )
-        return jsonify({'mensaje': 'Detalle de horario creado exitosamente'}), 201
+        if horario is None:
+            return jsonify({'mensaje': 'No se pudo crear el detalle de horario'}), 500
+        return jsonify({'mensaje': 'Detalle de horario creado exitosamente', 'detalle_horario': horario}), 201
 
-    def actualizar(self, det_hor_id, data):
+    def actualizar(self, det_hor_uuid, data):
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        horario = self.detalle_horario_service.obtener_por_id(det_hor_id)
-        if horario is None:
-            return jsonify({'mensaje': 'Detalle de horario no encontrado'}), 404
-
-        self.detalle_horario_service.actualizar(
+        if not self.detalle_horario_service.actualizar(
             data['DET_HOR_ASIG_ACA_ID'],
             data['DET_HOR_DIA_SEM_ID'],
             data['DET_HOR_HORA_INICIO'],
             data['DET_HOR_HORA_FIN'],
-            det_hor_id
-        )
+            det_hor_uuid
+        ):
+            return jsonify({'mensaje': 'Detalle de horario no encontrado'}), 404
         return jsonify({'mensaje': 'Detalle de horario actualizado exitosamente'}), 200
 
-    def eliminar(self, det_hor_id):
-        horario = self.detalle_horario_service.obtener_por_id(det_hor_id)
-        if horario is None:
+    def eliminar(self, det_hor_uuid):
+        if not self.detalle_horario_service.eliminar(det_hor_uuid):
             return jsonify({'mensaje': 'Detalle de horario no encontrado'}), 404
-
-        self.detalle_horario_service.eliminar(det_hor_id)
         return jsonify({'mensaje': 'Detalle de horario eliminado exitosamente'}), 200

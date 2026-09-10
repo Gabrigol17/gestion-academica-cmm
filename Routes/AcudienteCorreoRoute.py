@@ -20,11 +20,11 @@ def crear():
     return acudiente_correo_controller.crear(request.get_json())
 
 
-@acudiente_correo_bp.route('/acudientes-correos/<int:acu_corr_id>', methods=['PUT'])
-def actualizar(acu_corr_id):
-    return acudiente_correo_controller.actualizar(acu_corr_id, request.get_json())
+@acudiente_correo_bp.route('/acudientes-correos/<string:acu_corr_uuid>', methods=['PUT'])
+def actualizar(acu_corr_uuid):
+    return acudiente_correo_controller.actualizar(acu_corr_uuid, request.get_json())
 
 
-@acudiente_correo_bp.route('/acudientes-correos/<int:acu_corr_id>', methods=['DELETE'])
-def eliminar(acu_corr_id):
-    return acudiente_correo_controller.eliminar(acu_corr_id)
+@acudiente_correo_bp.route('/acudientes-correos/<string:acu_corr_uuid>', methods=['DELETE'])
+def eliminar(acu_corr_uuid):
+    return acudiente_correo_controller.eliminar(acu_corr_uuid)

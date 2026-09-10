@@ -9,13 +9,18 @@ class GradoService:
 
         query = (
             "INSERT INTO T_GRADO "
-            "(GRAD_NOMBRE, GRAD_NIV_EDU_ID) "
-            "VALUES (%s, %s)"
+            "(GRAD_UUID, GRAD_NOMBRE, GRAD_NIV_EDU_ID) "
+            "VALUES (UUID(), %s, %s)"
         )
 
         cursor.execute(query, (grad_nombre, grad_niv_edu_id))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -24,7 +29,7 @@ class GradoService:
 
         data = cursor.fetchall()
 
-        grados = [Grado(col[0], col[1], col[2]).to_dict() for col in data]
+        grados = [Grado(col[0], col[1], col[2], col[3]).to_dict() for col in data]
 
         cursor.close()
         return grados
@@ -37,27 +42,33 @@ class GradoService:
         data = cursor.fetchone()
         cursor.close()
         if data:
-            grado = Grado(data[0], data[1], data[2]).to_dict()
+            grado = Grado(data[0], data[1], data[2], data[3]).to_dict()
             return grado
         else:
             return None
 
-    def actualizar(self, grad_nombre, grad_niv_edu_id, grad_id):
+    def actualizar(self, grad_nombre, grad_niv_edu_id, grad_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_GRADO "
             "SET GRAD_NOMBRE = %s, GRAD_NIV_EDU_ID = %s "
-            "WHERE GRAD_ID = %s"
+            "WHERE GRAD_UUID = %s"
         )
-        cursor.execute(query, (grad_nombre, grad_niv_edu_id, grad_id))
+        cursor.execute(query, (grad_nombre, grad_niv_edu_id, grad_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, grad_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, grad_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_GRADO WHERE GRAD_ID = %s"
-        cursor.execute(query, (grad_id,))
+        query = "DELETE FROM T_GRADO WHERE GRAD_UUID = %s"
+        cursor.execute(query, (grad_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

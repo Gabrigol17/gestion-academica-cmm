@@ -1,7 +1,8 @@
 class Grado:
 
-    def __init__(self, GRAD_ID, GRAD_NOMBRE, GRAD_NIV_EDUC_ID):
+    def __init__(self, GRAD_ID, GRAD_UUID, GRAD_NOMBRE, GRAD_NIV_EDUC_ID):
         self.GRAD_ID          = GRAD_ID
+        self.GRAD_UUID        = GRAD_UUID
         self.GRAD_NOMBRE      = GRAD_NOMBRE
         self.GRAD_NIV_EDUC_ID = GRAD_NIV_EDUC_ID
 
@@ -9,6 +10,7 @@ class Grado:
     def to_dict(self):
         return {
             'GRAD_ID'         : self.GRAD_ID,
+            'GRAD_UUID'       : self.GRAD_UUID,
             'GRAD_NOMBRE'     : self.GRAD_NOMBRE,
             'GRAD_NIV_EDUC_ID': self.GRAD_NIV_EDUC_ID
         }

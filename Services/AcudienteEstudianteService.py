@@ -14,8 +14,13 @@ class AcudienteEstudianteService:
         )
 
         cursor.execute(query, (acu_est_parentesco, acu_est_acu_id, acu_est_est_id, acu_est_esprincipal))
+
+        nuevo_id = cursor.lastrowid
+
         current_app.mysql.connection.commit()
         cursor.close()
+
+        return self.obtener_por_id(nuevo_id)
 
     def obtener_todos(self):
         cursor = current_app.mysql.connection.cursor()
@@ -42,23 +47,29 @@ class AcudienteEstudianteService:
         else:
             return None
 
-    def actualizar(self, acu_est_parentesco, acu_est_acu_id, acu_est_est_id, acu_est_esprincipal, acu_est_id):
+    def actualizar(self, acu_est_parentesco, acu_est_acu_id, acu_est_est_id, acu_est_esprincipal, acu_est_uuid):
         cursor = current_app.mysql.connection.cursor()
         query = (
             "UPDATE T_ACUDIENTE_ESTUDIANTE "
             "SET ACU_EST_PARENTESCO = %s, ACU_EST_ACU_ID = %s, "
             "ACU_EST_EST_ID = %s, ACU_EST_ESPRINCIPAL = %s "
-            "WHERE ACU_EST_ID = %s"
+            "WHERE ACU_EST_UUID = %s"
         )
-        cursor.execute(query, (acu_est_parentesco, acu_est_acu_id, acu_est_est_id, acu_est_esprincipal, acu_est_id))
+        cursor.execute(query, (acu_est_parentesco, acu_est_acu_id, acu_est_est_id, acu_est_esprincipal, acu_est_uuid))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
 
-    def eliminar(self, acu_est_id):
+        return filas_afectadas > 0
+
+    def eliminar(self, acu_est_uuid):
         cursor = current_app.mysql.connection.cursor()
-        query = "DELETE FROM T_ACUDIENTE_ESTUDIANTE WHERE ACU_EST_ID = %s"
-        cursor.execute(query, (acu_est_id,))
+        query = "DELETE FROM T_ACUDIENTE_ESTUDIANTE WHERE ACU_EST_UUID = %s"
+        cursor.execute(query, (acu_est_uuid,))
 
         current_app.mysql.connection.commit()
+        filas_afectadas = cursor.rowcount
         cursor.close()
+
+        return filas_afectadas > 0

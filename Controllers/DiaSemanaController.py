@@ -23,24 +23,20 @@ class DiaSemanaController:
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        self.dia_semana_service.crear(data['DIA_SEM_DIA'])
-        return jsonify({'mensaje': 'Día de semana creado exitosamente'}), 201
+        dia = self.dia_semana_service.crear(data['DIA_SEM_DIA'])
+        if dia is None:
+            return jsonify({'mensaje': 'No se pudo crear el día de semana'}), 500
+        return jsonify({'mensaje': 'Día de semana creado exitosamente', 'dia_semana': dia}), 201
 
-    def actualizar(self, dia_sem_id, data):
+    def actualizar(self, dia_sem_uuid, data):
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        dia = self.dia_semana_service.obtener_por_id(dia_sem_id)
-        if dia is None:
+        if not self.dia_semana_service.actualizar(data['DIA_SEM_DIA'], dia_sem_uuid):
             return jsonify({'mensaje': 'Día de semana no encontrado'}), 404
+        return jsonify({'mensaje': 'Día de semana actualizada exitosamente'}), 200
 
-        self.dia_semana_service.actualizar(data['DIA_SEM_DIA'], dia_sem_id)
-        return jsonify({'mensaje': 'Día de semana actualizado exitosamente'}), 200
-
-    def eliminar(self, dia_sem_id):
-        dia = self.dia_semana_service.obtener_por_id(dia_sem_id)
-        if dia is None:
+    def eliminar(self, dia_sem_uuid):
+        if not self.dia_semana_service.eliminar(dia_sem_uuid):
             return jsonify({'mensaje': 'Día de semana no encontrado'}), 404
-
-        self.dia_semana_service.eliminar(dia_sem_id)
         return jsonify({'mensaje': 'Día de semana eliminado exitosamente'}), 200

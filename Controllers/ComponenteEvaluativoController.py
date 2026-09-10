@@ -23,33 +23,29 @@ class ComponenteEvaluativoController:
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        self.componente_evaluativo_service.crear(
+        componente = self.componente_evaluativo_service.crear(
             data['COM_EVA_PORCENTAJE'],
             data['COM_EVA_PER_ACA_ID'],
             data['COM_EVA_TIPO_COMP_ID']
         )
-        return jsonify({'mensaje': 'Componente evaluativo creado exitosamente'}), 201
+        if componente is None:
+            return jsonify({'mensaje': 'No se pudo crear el componente evaluativo'}), 500
+        return jsonify({'mensaje': 'Componente evaluativo creado exitosamente', 'componente_evaluativo': componente}), 201
 
-    def actualizar(self, com_eva_id, data):
+    def actualizar(self, com_eva_uuid, data):
         if not data or not all(campo in data for campo in self.CAMPOS_REQUERIDOS):
             return jsonify({'mensaje': 'Faltan campos requeridos'}), 400
 
-        componente = self.componente_evaluativo_service.obtener_por_id(com_eva_id)
-        if componente is None:
-            return jsonify({'mensaje': 'Componente evaluativo no encontrado'}), 404
-
-        self.componente_evaluativo_service.actualizar(
+        if not self.componente_evaluativo_service.actualizar(
             data['COM_EVA_PORCENTAJE'],
             data['COM_EVA_PER_ACA_ID'],
             data['COM_EVA_TIPO_COMP_ID'],
-            com_eva_id
-        )
+            com_eva_uuid
+        ):
+            return jsonify({'mensaje': 'Componente evaluativo no encontrado'}), 404
         return jsonify({'mensaje': 'Componente evaluativo actualizado exitosamente'}), 200
 
-    def eliminar(self, com_eva_id):
-        componente = self.componente_evaluativo_service.obtener_por_id(com_eva_id)
-        if componente is None:
+    def eliminar(self, com_eva_uuid):
+        if not self.componente_evaluativo_service.eliminar(com_eva_uuid):
             return jsonify({'mensaje': 'Componente evaluativo no encontrado'}), 404
-
-        self.componente_evaluativo_service.eliminar(com_eva_id)
         return jsonify({'mensaje': 'Componente evaluativo eliminado exitosamente'}), 200
