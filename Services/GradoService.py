@@ -10,7 +10,7 @@ class GradoService:
         query = (
             "INSERT INTO T_GRADO "
             "(GRAD_UUID, GRAD_NOMBRE, GRAD_NIV_EDU_ID) "
-            "VALUES (UUID(), %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s)"
         )
 
         cursor.execute(query, (grad_nombre, grad_niv_edu_id))

@@ -10,7 +10,7 @@ class ActividadEvaluativaService:
         query = (
             "INSERT INTO T_ACTIVIDAD_EVALUATIVA "
             "(ACT_EVA_UUID, ACT_EVA_NOMBRE, ACT_EVA_DESCRIPCION, ACT_EVA_ASIG_ACA_ID, ACT_EVA_COM_EVA_ID) "
-            "VALUES (UUID(), %s, %s, %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s, %s, %s)"
         )
 
         cursor.execute(query, (act_eva_nombre, act_eva_descripcion, act_eva_asig_aca_id, act_eva_com_eva_id))

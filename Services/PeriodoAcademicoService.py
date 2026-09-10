@@ -10,7 +10,7 @@ class PeriodoAcademicoService:
         query = (
             "INSERT INTO T_PERIODO_ACADEMICO "
             "(PER_ACA_UUID, PER_ACA_NUMERO, PER_ACA_FECHA_INICIO, PER_ACA_FECHA_FIN, PER_ACA_VIG_ID) "
-            "VALUES (UUID(), %s, %s, %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s, %s, %s)"
         )
 
         cursor.execute(query, (per_aca_numero, per_aca_fecha_inicio, per_aca_fecha_fin, per_aca_vig_id))

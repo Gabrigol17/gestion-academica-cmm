@@ -10,7 +10,7 @@ class TipoComponenteService:
         query = (
             "INSERT INTO T_TIPO_COMPONENTE "
             "(TIPO_COMP_UUID, TIPO_COMP_NOMBRE) "
-            "VALUES (UUID(), %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s)"
         )
 
         cursor.execute(query, (tipo_comp_nombre,))

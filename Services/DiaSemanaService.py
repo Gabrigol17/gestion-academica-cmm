@@ -10,7 +10,7 @@ class DiaSemanaService:
         query = (
             "INSERT INTO T_DIA_SEMANA "
             "(DIA_SEM_UUID, DIA_SEM_DIA) "
-            "VALUES (UUID(), %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s)"
         )
 
         cursor.execute(query, (dia_sem_dia,))

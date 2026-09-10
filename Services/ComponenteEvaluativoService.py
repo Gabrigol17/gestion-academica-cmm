@@ -10,7 +10,7 @@ class ComponenteEvaluativoService:
         query = (
             "INSERT INTO T_COMPONENTE_EVALUATIVO "
             "(COM_EVA_UUID, COM_EVA_PORCENTAJE, COM_EVA_PER_ACA_ID, COM_EVA_TIPO_COMP_ID) "
-            "VALUES (UUID(), %s, %s, %s)"
+            "VALUES (REPLACE(UUID(), '-', ''), %s, %s, %s)"
         )
 
         cursor.execute(query, (com_eva_porcentaje, com_eva_per_aca_id, com_eva_tipo_comp_id))
