@@ -20,6 +20,7 @@ from Routes.ComponenteEvaluativoRoute import componente_evaluativo_bp
 from Routes.ActividadEvaluativaRoute import actividad_evaluativa_bp
 from Routes.ResultadoEvaluativoRoute import resultado_evaluativo_bp
 from Routes.DetalleHorarioRoute import detalle_horario_bp
+from Routes.documentacion import documentacion_bp
 
 
 def CargarRutas(app):
@@ -45,3 +46,4 @@ def CargarRutas(app):
     app.register_blueprint(actividad_evaluativa_bp)
     app.register_blueprint(resultado_evaluativo_bp)
     app.register_blueprint(detalle_horario_bp)
+    app.register_blueprint(documentacion_bp)
