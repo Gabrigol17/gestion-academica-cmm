@@ -2,302 +2,1585 @@
   "openapi": "3.0.0",
   "info": {
     "title": "API de Gestión Académica CMM",
-    "description": "Especificación completa OpenAPI 3.0 para la API REST del sistema de Gestión Académica escolar.",
-    "version": "1.0.0"
+    "description": "Especificación OpenAPI 3.0 para la API REST del sistema de Gestión Académica del Colegio Madre Marcelina.\n\n### Cómo probar la API desde esta documentación\n1. En la barra superior verifica el **servidor** seleccionado. La opción `/` apunta al **mismo servidor donde abres esta página**, por lo que las pruebas se ejecutan contra la base de datos de ese entorno (local o Render).\n2. Despliega el endpoint que quieras probar y pulsa **Try it out**.\n3. Edita el cuerpo JSON con tus datos y pulsa **Execute**. Verás la respuesta real del servidor y de la base de datos.\n\n### Orden recomendado para crear registros (por llaves foráneas)\n1. **Rol** (`/roles`)\n2. **Persona** (`/personas`) - requiere `PER_ROL_ID`\n3. **Nivel educativo** -> **Grado** -> **Materia** -> **Vigencia** -> **Periodo académico** -> **Curso vigencia**\n4. **Estudiante** (`/estudiantes`) o **Docente** (`/docentes`) - requieren `..._PER_ID`\n5. **Acudiente** -> **Correo / Teléfono / Acudiente-Estudiante**\n6. **Matrícula** (`/matriculas`) - requiere `MATR_EST_ID` y `MATR_CUR_VIG_ID`\n7. **Día de la semana** -> **Asignación académica** -> **Detalle horario**\n8. **Tipo de componente** -> **Componente evaluativo** -> **Actividad evaluativa** -> **Resultado evaluativo**\n\n### Notas\n- Los campos de **Id** y **UUID** son generados por el servidor: no los envíes al crear.\n- Las actualizaciones (`PUT`) y eliminaciones (`DELETE`) usan el **UUID** (columna `*_UUID`).\n- Las consultas por identificador (`GET /recurso/{id}`) usan el **Id numérico** (columna `*_ID`).\n- Todos los nombres de campo se envían en **MAYÚSCULAS** (ej. `PER_PRIMER_NOMBRE`).",
+    "version": "1.1.0"
   },
   "servers": [
     {
-      "url": "https://gestion-academica-cmm.onrender.com",
-      "description": "Servidor de Producción (Render)"
+      "url": "/",
+      "description": "Servidor actual: usa el mismo host y puerto donde está abierta esta documentación (recomendado para probar contra la base de datos)."
     },
     {
-      "url": "http://127.0.0.1:5000",
-      "description": "Servidor Local de Desarrollo"
+      "url": "http://127.0.0.1:3000",
+      "description": "Servidor local de desarrollo (app.py se ejecuta en el puerto 3000)."
+    },
+    {
+      "url": "https://gestion-academica-cmm.onrender.com",
+      "description": "Servidor de producción (Render). ¡Cuidado: los cambios afectan datos reales!"
     }
   ],
   "tags": [
-    { "name": "Personas", "description": "Gestión de información de personas y roles" },
-    { "name": "Estudiantes", "description": "Gestión de estudiantes" },
-    { "name": "Docentes", "description": "Gestión de docentes" },
-    { "name": "Acudientes", "description": "Gestión de acudientes, contactos y relación con estudiantes" },
-    { "name": "Matriculas y Cursos", "description": "Matrículas, grados, vigencias y ofertas de cursos" },
-    { "name": "Horarios", "description": "Asignación académica, horarios y días de la semana" },
-    { "name": "Evaluaciones", "description": "Actividades evaluativas, componentes y resultados" }
+    { "name": "Personas", "description": "Personas base del sistema y sus roles." },
+    { "name": "Estudiantes", "description": "Estudiantes matriculables en el colegio." },
+    { "name": "Docentes", "description": "Docentes de la institución." },
+    { "name": "Acudientes", "description": "Acudientes, sus correos, teléfonos y relación con estudiantes." },
+    { "name": "Estructura Académica", "description": "Niveles, grados, materias, vigencias, periodos y cursos." },
+    { "name": "Matrículas", "description": "Registro de matrícula de estudiantes en cursos." },
+    { "name": "Horarios", "description": "Días de la semana, asignaciones académicas y detalle de horarios." },
+    { "name": "Evaluaciones", "description": "Tipos de componente, componentes, actividades y resultados evaluativos." }
   ],
   "paths": {
-    "/persona": {
+    "/personas": {
       "get": {
         "tags": ["Personas"],
         "summary": "Listar personas",
-        "responses": { "200": { "description": "Lista obtenida con éxito" } }
+        "description": "Devuelve todas las personas registradas.",
+        "operationId": "listarPersonas",
+        "responses": {
+          "200": {
+            "description": "Lista de personas.",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Persona" } } } }
+          }
+        }
       },
       "post": {
         "tags": ["Personas"],
         "summary": "Crear persona",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "per_nombre": { "type": "string" },
-                  "per_apellido": { "type": "string" },
-                  "per_numdoc": { "type": "string" },
-                  "per_genero": { "type": "string" }
-                }
-              }
-            }
-          }
-        },
-        "responses": { "201": { "description": "Creado con éxito" } }
+        "description": "Registra una nueva persona. `PER_SEGUNDO_NOMBRE` y `PER_SEGUNDO_APELLIDO` son opcionales. Se debe enviar un `PER_ROL_ID` existente.",
+        "operationId": "crearPersona",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Persona" } } } },
+        "responses": {
+          "201": { "description": "Persona creada exitosamente. Devuelve `{ mensaje, persona }`." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/persona/{id}": {
+    "/personas/{id}": {
       "get": {
         "tags": ["Personas"],
-        "summary": "Obtener persona por ID",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Encontrado" }, "404": { "description": "No encontrado" } }
-      },
-      "patch": {
+        "summary": "Obtener persona por Id",
+        "operationId": "obtenerPersonaPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (PER_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Persona encontrada.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Persona" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/personas/{uuid}": {
+      "put": {
         "tags": ["Personas"],
         "summary": "Actualizar persona",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "per_nombre": { "type": "string" },
-                  "per_apellido": { "type": "string" },
-                  "per_numdoc": { "type": "string" },
-                  "per_genero": { "type": "string" }
-                }
-              }
-            }
-          }
-        },
-        "responses": { "200": { "description": "Actualizado con éxito" }, "404": { "description": "No encontrado" } }
+        "description": "Actualiza una persona por su UUID. Se deben enviar los mismos campos requeridos que en la creación.",
+        "operationId": "actualizarPersona",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID de la persona (PER_UUID).", "schema": { "type": "string", "example": "9f8c1b2a3d4e4f5a6b7c8d9e0f1a2b3c" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Persona" } } } },
+        "responses": {
+          "200": { "description": "Persona actualizada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
       },
       "delete": {
         "tags": ["Personas"],
         "summary": "Eliminar persona",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Eliminado con éxito" } }
+        "operationId": "eliminarPersona",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID de la persona (PER_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Persona eliminada exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
       }
     },
-    "/rol": {
-      "get": { "tags": ["Personas"], "summary": "Listar roles", "responses": { "200": { "description": "OK" } } },
+
+    "/roles": {
+      "get": {
+        "tags": ["Personas"],
+        "summary": "Listar roles",
+        "operationId": "listarRoles",
+        "responses": {
+          "200": { "description": "Lista de roles.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Rol" } } } } }
+        }
+      },
       "post": {
         "tags": ["Personas"],
         "summary": "Crear rol",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "rol_nombre": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "operationId": "crearRol",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Rol" } } } },
+        "responses": {
+          "201": { "description": "Rol creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/estudiante": {
-      "get": { "tags": ["Estudiantes"], "summary": "Listar estudiantes", "responses": { "200": { "description": "OK" } } },
+    "/roles/{id}": {
+      "get": {
+        "tags": ["Personas"],
+        "summary": "Obtener rol por Id",
+        "operationId": "obtenerRolPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (ROL_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Rol encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Rol" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/roles/{uuid}": {
+      "put": {
+        "tags": ["Personas"],
+        "summary": "Actualizar rol",
+        "operationId": "actualizarRol",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID del rol (ROL_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Rol" } } } },
+        "responses": {
+          "200": { "description": "Rol actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Personas"],
+        "summary": "Eliminar rol",
+        "operationId": "eliminarRol",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID del rol (ROL_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Rol eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/estudiantes": {
+      "get": {
+        "tags": ["Estudiantes"],
+        "summary": "Listar estudiantes",
+        "operationId": "listarEstudiantes",
+        "responses": {
+          "200": { "description": "Lista de estudiantes.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Estudiante" } } } } }
+        }
+      },
       "post": {
         "tags": ["Estudiantes"],
         "summary": "Crear estudiante",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "per_id": { "type": "integer" }, "est_codigo": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Requiere una persona previamente creada (`EST_PER_ID`).",
+        "operationId": "crearEstudiante",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Estudiante" } } } },
+        "responses": {
+          "201": { "description": "Estudiante creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/estudiante/{id}": {
-      "get": { "tags": ["Estudiantes"], "summary": "Obtener estudiante por ID", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "No encontrado" } } },
-      "patch": {
+    "/estudiantes/{id}": {
+      "get": {
+        "tags": ["Estudiantes"],
+        "summary": "Obtener estudiante por Id",
+        "operationId": "obtenerEstudiantePorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (EST_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Estudiante encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Estudiante" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/estudiantes/{uuid}": {
+      "put": {
         "tags": ["Estudiantes"],
         "summary": "Actualizar estudiante",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "est_codigo": { "type": "string" } } } } } },
-        "responses": { "200": { "description": "Actualizado" } }
+        "operationId": "actualizarEstudiante",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID del estudiante (EST_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Estudiante" } } } },
+        "responses": {
+          "200": { "description": "Estudiante actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
       },
-      "delete": { "tags": ["Estudiantes"], "summary": "Eliminar estudiante", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Eliminado" } } }
+      "delete": {
+        "tags": ["Estudiantes"],
+        "summary": "Eliminar estudiante",
+        "operationId": "eliminarEstudiante",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID del estudiante (EST_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Estudiante eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
     },
-    "/docente": {
-      "get": { "tags": ["Docentes"], "summary": "Listar docentes", "responses": { "200": { "description": "OK" } } },
+
+    "/docentes": {
+      "get": {
+        "tags": ["Docentes"],
+        "summary": "Listar docentes",
+        "operationId": "listarDocentes",
+        "responses": {
+          "200": { "description": "Lista de docentes.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Docente" } } } } }
+        }
+      },
       "post": {
         "tags": ["Docentes"],
         "summary": "Crear docente",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "per_id": { "type": "integer" }, "doc_especialidad": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Requiere una persona previamente creada (`DOC_PER_ID`).",
+        "operationId": "crearDocente",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Docente" } } } },
+        "responses": {
+          "201": { "description": "Docente creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/docente/{id}": {
-      "get": { "tags": ["Docentes"], "summary": "Obtener docente por ID", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "No encontrado" } } },
-      "patch": {
+    "/docentes/{id}": {
+      "get": {
+        "tags": ["Docentes"],
+        "summary": "Obtener docente por Id",
+        "operationId": "obtenerDocentePorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (DOC_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Docente encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Docente" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/docentes/{uuid}": {
+      "put": {
         "tags": ["Docentes"],
         "summary": "Actualizar docente",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "doc_especialidad": { "type": "string" } } } } } },
-        "responses": { "200": { "description": "Actualizado" } }
+        "operationId": "actualizarDocente",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID del docente (DOC_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Docente" } } } },
+        "responses": {
+          "200": { "description": "Docente actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
       },
-      "delete": { "tags": ["Docentes"], "summary": "Eliminar docente", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Eliminado" } } }
+      "delete": {
+        "tags": ["Docentes"],
+        "summary": "Eliminar docente",
+        "operationId": "eliminarDocente",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID del docente (DOC_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Docente eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
     },
-    "/acudiente": {
-      "get": { "tags": ["Acudientes"], "summary": "Listar acudientes", "responses": { "200": { "description": "OK" } } },
+
+    "/acudientes": {
+      "get": {
+        "tags": ["Acudientes"],
+        "summary": "Listar acudientes",
+        "operationId": "listarAcudientes",
+        "responses": {
+          "200": { "description": "Lista de acudientes.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Acudiente" } } } } }
+        }
+      },
       "post": {
         "tags": ["Acudientes"],
         "summary": "Crear acudiente",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "per_id": { "type": "integer" }, "acu_parentesco": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "operationId": "crearAcudiente",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Acudiente" } } } },
+        "responses": {
+          "201": { "description": "Acudiente creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/acudiente-correo": {
-      "get": { "tags": ["Acudientes"], "summary": "Listar correos de acudientes", "responses": { "200": { "description": "OK" } } },
+    "/acudientes/{id}": {
+      "get": {
+        "tags": ["Acudientes"],
+        "summary": "Obtener acudiente por Id",
+        "operationId": "obtenerAcudientePorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (ACU_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Acudiente encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Acudiente" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/acudientes/{uuid}": {
+      "put": {
+        "tags": ["Acudientes"],
+        "summary": "Actualizar acudiente",
+        "operationId": "actualizarAcudiente",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID del acudiente (ACU_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Acudiente" } } } },
+        "responses": {
+          "200": { "description": "Acudiente actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Acudientes"],
+        "summary": "Eliminar acudiente",
+        "operationId": "eliminarAcudiente",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID del acudiente (ACU_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Acudiente eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/acudientes-correos": {
+      "get": {
+        "tags": ["Acudientes"],
+        "summary": "Listar correos de acudientes",
+        "operationId": "listarAcudienteCorreos",
+        "responses": {
+          "200": { "description": "Lista de correos.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AcudienteCorreo" } } } } }
+        }
+      },
       "post": {
         "tags": ["Acudientes"],
         "summary": "Asignar correo a acudiente",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "acu_id": { "type": "integer" }, "correo": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "operationId": "crearAcudienteCorreo",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AcudienteCorreo" } } } },
+        "responses": {
+          "201": { "description": "Correo asignado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/acudiente-telefono": {
-      "get": { "tags": ["Acudientes"], "summary": "Listar teléfonos de acudientes", "responses": { "200": { "description": "OK" } } },
+    "/acudientes-correos/{id}": {
+      "get": {
+        "tags": ["Acudientes"],
+        "summary": "Obtener correo de acudiente por Id",
+        "operationId": "obtenerAcudienteCorreoPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (ACU_CORR_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Correo encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AcudienteCorreo" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/acudientes-correos/{uuid}": {
+      "put": {
+        "tags": ["Acudientes"],
+        "summary": "Actualizar correo de acudiente",
+        "operationId": "actualizarAcudienteCorreo",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ACU_CORR_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AcudienteCorreo" } } } },
+        "responses": {
+          "200": { "description": "Correo actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Acudientes"],
+        "summary": "Eliminar correo de acudiente",
+        "operationId": "eliminarAcudienteCorreo",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ACU_CORR_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Correo eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/acudientes-telefonos": {
+      "get": {
+        "tags": ["Acudientes"],
+        "summary": "Listar teléfonos de acudientes",
+        "operationId": "listarAcudienteTelefonos",
+        "responses": {
+          "200": { "description": "Lista de teléfonos.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AcudienteTelefono" } } } } }
+        }
+      },
       "post": {
         "tags": ["Acudientes"],
         "summary": "Asignar teléfono a acudiente",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "acu_id": { "type": "integer" }, "telefono": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "operationId": "crearAcudienteTelefono",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AcudienteTelefono" } } } },
+        "responses": {
+          "201": { "description": "Teléfono asignado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/acudiente-estudiante": {
-      "get": { "tags": ["Acudientes"], "summary": "Listar relaciones acudiente-estudiante", "responses": { "200": { "description": "OK" } } },
+    "/acudientes-telefonos/{id}": {
+      "get": {
+        "tags": ["Acudientes"],
+        "summary": "Obtener teléfono de acudiente por Id",
+        "operationId": "obtenerAcudienteTelefonoPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (ACU_TEL_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Teléfono encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AcudienteTelefono" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/acudientes-telefonos/{uuid}": {
+      "put": {
+        "tags": ["Acudientes"],
+        "summary": "Actualizar teléfono de acudiente",
+        "operationId": "actualizarAcudienteTelefono",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ACU_TEL_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AcudienteTelefono" } } } },
+        "responses": {
+          "200": { "description": "Teléfono actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Acudientes"],
+        "summary": "Eliminar teléfono de acudiente",
+        "operationId": "eliminarAcudienteTelefono",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ACU_TEL_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Teléfono eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/acudientes-estudiantes": {
+      "get": {
+        "tags": ["Acudientes"],
+        "summary": "Listar relaciones acudiente-estudiante",
+        "operationId": "listarAcudienteEstudiantes",
+        "responses": {
+          "200": { "description": "Lista de relaciones.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AcudienteEstudiante" } } } } }
+        }
+      },
       "post": {
         "tags": ["Acudientes"],
         "summary": "Vincular acudiente con estudiante",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "acu_id": { "type": "integer" }, "est_id": { "type": "integer" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "operationId": "crearAcudienteEstudiante",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AcudienteEstudiante" } } } },
+        "responses": {
+          "201": { "description": "Relación creada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/nivel-educativo": {
-      "get": { "tags": ["Matriculas y Cursos"], "summary": "Listar niveles educativos", "responses": { "200": { "description": "OK" } } },
+    "/acudientes-estudiantes/{id}": {
+      "get": {
+        "tags": ["Acudientes"],
+        "summary": "Obtener relación acudiente-estudiante por Id",
+        "operationId": "obtenerAcudienteEstudiantePorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (ACU_EST_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Relación encontrada.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AcudienteEstudiante" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/acudientes-estudiantes/{uuid}": {
+      "put": {
+        "tags": ["Acudientes"],
+        "summary": "Actualizar relación acudiente-estudiante",
+        "operationId": "actualizarAcudienteEstudiante",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ACU_EST_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AcudienteEstudiante" } } } },
+        "responses": {
+          "200": { "description": "Relación actualizada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Acudientes"],
+        "summary": "Eliminar relación acudiente-estudiante",
+        "operationId": "eliminarAcudienteEstudiante",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ACU_EST_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Relación eliminada exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/niveles-educativos": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Listar niveles educativos",
+        "operationId": "listarNivelesEducativos",
+        "responses": {
+          "200": { "description": "Lista de niveles educativos.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/NivelEducativo" } } } } }
+        }
+      },
       "post": {
-        "tags": ["Matriculas y Cursos"],
+        "tags": ["Estructura Académica"],
         "summary": "Crear nivel educativo",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "niv_nombre": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "operationId": "crearNivelEducativo",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NivelEducativo" } } } },
+        "responses": {
+          "201": { "description": "Nivel educativo creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/grado": {
-      "get": { "tags": ["Matriculas y Cursos"], "summary": "Listar grados", "responses": { "200": { "description": "OK" } } },
+    "/niveles-educativos/{id}": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Obtener nivel educativo por Id",
+        "operationId": "obtenerNivelEducativoPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (NIV_EDUC_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Nivel educativo encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NivelEducativo" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/niveles-educativos/{uuid}": {
+      "put": {
+        "tags": ["Estructura Académica"],
+        "summary": "Actualizar nivel educativo",
+        "operationId": "actualizarNivelEducativo",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (NIV_EDUC_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NivelEducativo" } } } },
+        "responses": {
+          "200": { "description": "Nivel educativo actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Estructura Académica"],
+        "summary": "Eliminar nivel educativo",
+        "operationId": "eliminarNivelEducativo",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (NIV_EDUC_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Nivel educativo eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/grados": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Listar grados",
+        "operationId": "listarGrados",
+        "responses": {
+          "200": { "description": "Lista de grados.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Grado" } } } } }
+        }
+      },
       "post": {
-        "tags": ["Matriculas y Cursos"],
+        "tags": ["Estructura Académica"],
         "summary": "Crear grado",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "gra_nombre": { "type": "string" }, "niv_id": { "type": "integer" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Requiere un nivel educativo existente (`GRAD_NIV_EDUC_ID`).",
+        "operationId": "crearGrado",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Grado" } } } },
+        "responses": {
+          "201": { "description": "Grado creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/materia": {
-      "get": { "tags": ["Matriculas y Cursos"], "summary": "Listar materias", "responses": { "200": { "description": "OK" } } },
+    "/grados/{id}": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Obtener grado por Id",
+        "operationId": "obtenerGradoPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (GRAD_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Grado encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Grado" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/grados/{uuid}": {
+      "put": {
+        "tags": ["Estructura Académica"],
+        "summary": "Actualizar grado",
+        "operationId": "actualizarGrado",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (GRAD_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Grado" } } } },
+        "responses": {
+          "200": { "description": "Grado actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Estructura Académica"],
+        "summary": "Eliminar grado",
+        "operationId": "eliminarGrado",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (GRAD_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Grado eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/materias": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Listar materias",
+        "operationId": "listarMaterias",
+        "responses": {
+          "200": { "description": "Lista de materias.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Materia" } } } } }
+        }
+      },
       "post": {
-        "tags": ["Matriculas y Cursos"],
+        "tags": ["Estructura Académica"],
         "summary": "Crear materia",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "mat_nombre": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "operationId": "crearMateria",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Materia" } } } },
+        "responses": {
+          "201": { "description": "Materia creada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/vigencia": {
-      "get": { "tags": ["Matriculas y Cursos"], "summary": "Listar vigencias", "responses": { "200": { "description": "OK" } } },
+    "/materias/{id}": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Obtener materia por Id",
+        "operationId": "obtenerMateriaPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (MAT_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Materia encontrada.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Materia" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/materias/{uuid}": {
+      "put": {
+        "tags": ["Estructura Académica"],
+        "summary": "Actualizar materia",
+        "operationId": "actualizarMateria",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (MAT_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Materia" } } } },
+        "responses": {
+          "200": { "description": "Materia actualizada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Estructura Académica"],
+        "summary": "Eliminar materia",
+        "operationId": "eliminarMateria",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (MAT_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Materia eliminada exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/vigencias": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Listar vigencias",
+        "operationId": "listarVigencias",
+        "responses": {
+          "200": { "description": "Lista de vigencias.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Vigencia" } } } } }
+        }
+      },
       "post": {
-        "tags": ["Matriculas y Cursos"],
+        "tags": ["Estructura Académica"],
         "summary": "Crear vigencia",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "vig_anio": { "type": "integer" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Crea un año lectivo. El campo se envía como `VIG_AÑO`.",
+        "operationId": "crearVigencia",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Vigencia" } } } },
+        "responses": {
+          "201": { "description": "Vigencia creada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/periodo-academico": {
-      "get": { "tags": ["Matriculas y Cursos"], "summary": "Listar periodos académicos", "responses": { "200": { "description": "OK" } } },
+    "/vigencias/{id}": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Obtener vigencia por Id",
+        "operationId": "obtenerVigenciaPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (VIG_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Vigencia encontrada.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Vigencia" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/vigencias/{uuid}": {
+      "put": {
+        "tags": ["Estructura Académica"],
+        "summary": "Actualizar vigencia",
+        "operationId": "actualizarVigencia",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (VIG_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Vigencia" } } } },
+        "responses": {
+          "200": { "description": "Vigencia actualizada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Estructura Académica"],
+        "summary": "Eliminar vigencia",
+        "operationId": "eliminarVigencia",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (VIG_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Vigencia eliminada exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/periodos-academicos": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Listar periodos académicos",
+        "operationId": "listarPeriodosAcademicos",
+        "responses": {
+          "200": { "description": "Lista de periodos académicos.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PeriodoAcademico" } } } } }
+        }
+      },
       "post": {
-        "tags": ["Matriculas y Cursos"],
+        "tags": ["Estructura Académica"],
         "summary": "Crear periodo académico",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "per_nombre": { "type": "string" }, "vig_id": { "type": "integer" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Requiere una vigencia existente (`PER_ACA_VIG_ID`).",
+        "operationId": "crearPeriodoAcademico",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PeriodoAcademico" } } } },
+        "responses": {
+          "201": { "description": "Periodo académico creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/curso-vigencia": {
-      "get": { "tags": ["Matriculas y Cursos"], "summary": "Listar cursos por vigencia", "responses": { "200": { "description": "OK" } } },
+    "/periodos-academicos/{id}": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Obtener periodo académico por Id",
+        "operationId": "obtenerPeriodoAcademicoPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (PER_ACA_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Periodo académico encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PeriodoAcademico" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/periodos-academicos/{uuid}": {
+      "put": {
+        "tags": ["Estructura Académica"],
+        "summary": "Actualizar periodo académico",
+        "operationId": "actualizarPeriodoAcademico",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (PER_ACA_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PeriodoAcademico" } } } },
+        "responses": {
+          "200": { "description": "Periodo académico actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Estructura Académica"],
+        "summary": "Eliminar periodo académico",
+        "operationId": "eliminarPeriodoAcademico",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (PER_ACA_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Periodo académico eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/cursos-vigencia": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Listar cursos por vigencia",
+        "operationId": "listarCursosVigencia",
+        "responses": {
+          "200": { "description": "Lista de cursos por vigencia.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/CursoVigencia" } } } } }
+        }
+      },
       "post": {
-        "tags": ["Matriculas y Cursos"],
+        "tags": ["Estructura Académica"],
         "summary": "Crear curso en vigencia",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "gra_id": { "type": "integer" }, "vig_id": { "type": "integer" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Une un grado con una vigencia y una letra (ej. `A`). Requiere `CUR_VIG_VIG_ID` y `CUR_VIG_GRAD_ID`.",
+        "operationId": "crearCursoVigencia",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CursoVigencia" } } } },
+        "responses": {
+          "201": { "description": "Curso creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/matricula": {
-      "get": { "tags": ["Matriculas y Cursos"], "summary": "Listar matrículas", "responses": { "200": { "description": "OK" } } },
+    "/cursos-vigencia/{id}": {
+      "get": {
+        "tags": ["Estructura Académica"],
+        "summary": "Obtener curso por Id",
+        "operationId": "obtenerCursoVigenciaPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (CUR_VIG_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Curso encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CursoVigencia" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/cursos-vigencia/{uuid}": {
+      "put": {
+        "tags": ["Estructura Académica"],
+        "summary": "Actualizar curso vigencia",
+        "operationId": "actualizarCursoVigencia",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (CUR_VIG_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CursoVigencia" } } } },
+        "responses": {
+          "200": { "description": "Curso actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Estructura Académica"],
+        "summary": "Eliminar curso vigencia",
+        "operationId": "eliminarCursoVigencia",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (CUR_VIG_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Curso eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/matriculas": {
+      "get": {
+        "tags": ["Matrículas"],
+        "summary": "Listar matrículas",
+        "operationId": "listarMatriculas",
+        "responses": {
+          "200": { "description": "Lista de matrículas.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Matricula" } } } } }
+        }
+      },
       "post": {
-        "tags": ["Matriculas y Cursos"],
+        "tags": ["Matrículas"],
         "summary": "Registrar matrícula",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "est_id": { "type": "integer" }, "cur_vig_id": { "type": "integer" }, "mat_fecha": { "type": "string", "format": "date" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Requiere un estudiante (`MATR_EST_ID`) y un curso por vigencia (`MATR_CUR_VIG_ID`).",
+        "operationId": "crearMatricula",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Matricula" } } } },
+        "responses": {
+          "201": { "description": "Matrícula registrada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/dia-semana": {
-      "get": { "tags": ["Horarios"], "summary": "Listar días de la semana", "responses": { "200": { "description": "OK" } } },
+    "/matriculas/{id}": {
+      "get": {
+        "tags": ["Matrículas"],
+        "summary": "Obtener matrícula por Id",
+        "operationId": "obtenerMatriculaPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (MATR_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Matrícula encontrada.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Matricula" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/matriculas/{uuid}": {
+      "put": {
+        "tags": ["Matrículas"],
+        "summary": "Actualizar matrícula",
+        "operationId": "actualizarMatricula",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (MATR_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Matricula" } } } },
+        "responses": {
+          "200": { "description": "Matrícula actualizada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Matrículas"],
+        "summary": "Eliminar matrícula",
+        "operationId": "eliminarMatricula",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (MATR_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Matrícula eliminada exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/dias-semana": {
+      "get": {
+        "tags": ["Horarios"],
+        "summary": "Listar días de la semana",
+        "operationId": "listarDiasSemana",
+        "responses": {
+          "200": { "description": "Lista de días.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/DiaSemana" } } } } }
+        }
+      },
       "post": {
         "tags": ["Horarios"],
         "summary": "Crear día de la semana",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "dia_nombre": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "operationId": "crearDiaSemana",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiaSemana" } } } },
+        "responses": {
+          "201": { "description": "Día creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/asignacion-academica": {
-      "get": { "tags": ["Horarios"], "summary": "Listar asignaciones académicas", "responses": { "200": { "description": "OK" } } },
+    "/dias-semana/{id}": {
+      "get": {
+        "tags": ["Horarios"],
+        "summary": "Obtener día por Id",
+        "operationId": "obtenerDiaSemanaPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (DIA_SEM_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Día encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiaSemana" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/dias-semana/{uuid}": {
+      "put": {
+        "tags": ["Horarios"],
+        "summary": "Actualizar día de la semana",
+        "operationId": "actualizarDiaSemana",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (DIA_SEM_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiaSemana" } } } },
+        "responses": {
+          "200": { "description": "Día actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Horarios"],
+        "summary": "Eliminar día de la semana",
+        "operationId": "eliminarDiaSemana",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (DIA_SEM_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Día eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/asignaciones-academicas": {
+      "get": {
+        "tags": ["Horarios"],
+        "summary": "Listar asignaciones académicas",
+        "operationId": "listarAsignacionesAcademicas",
+        "responses": {
+          "200": { "description": "Lista de asignaciones académicas.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AsignacionAcademica" } } } } }
+        }
+      },
       "post": {
         "tags": ["Horarios"],
         "summary": "Crear asignación académica",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "doc_id": { "type": "integer" }, "mat_id": { "type": "integer" }, "cur_vig_id": { "type": "integer" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Asigna un docente a una materia en un curso. Requiere `ASIG_ACA_DOC_ID`, `ASIG_ACA_MAT_ID` y `ASIG_ACA_CUR_VIG_ID`.",
+        "operationId": "crearAsignacionAcademica",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AsignacionAcademica" } } } },
+        "responses": {
+          "201": { "description": "Asignación creada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/detalle-horario": {
-      "get": { "tags": ["Horarios"], "summary": "Listar detalles de horario", "responses": { "200": { "description": "OK" } } },
+    "/asignaciones-academicas/{id}": {
+      "get": {
+        "tags": ["Horarios"],
+        "summary": "Obtener asignación académica por Id",
+        "operationId": "obtenerAsignacionAcademicaPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (ASIG_ACA_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Asignación encontrada.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AsignacionAcademica" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/asignaciones-academicas/{uuid}": {
+      "put": {
+        "tags": ["Horarios"],
+        "summary": "Actualizar asignación académica",
+        "operationId": "actualizarAsignacionAcademica",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ASIG_ACA_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AsignacionAcademica" } } } },
+        "responses": {
+          "200": { "description": "Asignación actualizada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Horarios"],
+        "summary": "Eliminar asignación académica",
+        "operationId": "eliminarAsignacionAcademica",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ASIG_ACA_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Asignación eliminada exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/detalles-horario": {
+      "get": {
+        "tags": ["Horarios"],
+        "summary": "Listar detalles de horario",
+        "operationId": "listarDetallesHorario",
+        "responses": {
+          "200": { "description": "Lista de detalles de horario.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/DetalleHorario" } } } } }
+        }
+      },
       "post": {
         "tags": ["Horarios"],
         "summary": "Crear detalle de horario",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "asig_id": { "type": "integer" }, "dia_id": { "type": "integer" }, "hora_inicio": { "type": "string" }, "hora_fin": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Requiere una asignación académica (`DET_HOR_ASIG_ACA_ID`) y un día (`DET_HOR_DIA_SEM_ID`). Las horas se envían en formato `HH:MM:SS`.",
+        "operationId": "crearDetalleHorario",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DetalleHorario" } } } },
+        "responses": {
+          "201": { "description": "Detalle de horario creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/tipo-componente": {
-      "get": { "tags": ["Evaluaciones"], "summary": "Listar tipos de componentes", "responses": { "200": { "description": "OK" } } },
+    "/detalles-horario/{id}": {
+      "get": {
+        "tags": ["Horarios"],
+        "summary": "Obtener detalle de horario por Id",
+        "operationId": "obtenerDetalleHorarioPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (DET_HOR_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Detalle encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DetalleHorario" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/detalles-horario/{uuid}": {
+      "put": {
+        "tags": ["Horarios"],
+        "summary": "Actualizar detalle de horario",
+        "operationId": "actualizarDetalleHorario",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (DET_HOR_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DetalleHorario" } } } },
+        "responses": {
+          "200": { "description": "Detalle actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Horarios"],
+        "summary": "Eliminar detalle de horario",
+        "operationId": "eliminarDetalleHorario",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (DET_HOR_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Detalle eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/tipos-componente": {
+      "get": {
+        "tags": ["Evaluaciones"],
+        "summary": "Listar tipos de componente",
+        "operationId": "listarTiposComponente",
+        "responses": {
+          "200": { "description": "Lista de tipos de componente.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/TipoComponente" } } } } }
+        }
+      },
       "post": {
         "tags": ["Evaluaciones"],
         "summary": "Crear tipo de componente",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "tip_nombre": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "operationId": "crearTipoComponente",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TipoComponente" } } } },
+        "responses": {
+          "201": { "description": "Tipo de componente creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/componente-evaluativo": {
-      "get": { "tags": ["Evaluaciones"], "summary": "Listar componentes evaluativos", "responses": { "200": { "description": "OK" } } },
+    "/tipos-componente/{id}": {
+      "get": {
+        "tags": ["Evaluaciones"],
+        "summary": "Obtener tipo de componente por Id",
+        "operationId": "obtenerTipoComponentePorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (TIPO_COMP_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Tipo de componente encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TipoComponente" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/tipos-componente/{uuid}": {
+      "put": {
+        "tags": ["Evaluaciones"],
+        "summary": "Actualizar tipo de componente",
+        "operationId": "actualizarTipoComponente",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (TIPO_COMP_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TipoComponente" } } } },
+        "responses": {
+          "200": { "description": "Tipo de componente actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Evaluaciones"],
+        "summary": "Eliminar tipo de componente",
+        "operationId": "eliminarTipoComponente",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (TIPO_COMP_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Tipo de componente eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/componentes-evaluativos": {
+      "get": {
+        "tags": ["Evaluaciones"],
+        "summary": "Listar componentes evaluativos",
+        "operationId": "listarComponentesEvaluativos",
+        "responses": {
+          "200": { "description": "Lista de componentes evaluativos.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ComponenteEvaluativo" } } } } }
+        }
+      },
       "post": {
         "tags": ["Evaluaciones"],
         "summary": "Crear componente evaluativo",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "com_nombre": { "type": "string" }, "tip_id": { "type": "integer" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Requiere un periodo académico (`COM_EVA_PER_ACA_ID`) y un tipo de componente (`COM_EVA_TIPO_COMP_ID`).",
+        "operationId": "crearComponenteEvaluativo",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ComponenteEvaluativo" } } } },
+        "responses": {
+          "201": { "description": "Componente creado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/actividad-evaluativa": {
-      "get": { "tags": ["Evaluaciones"], "summary": "Listar actividades evaluativas", "responses": { "200": { "description": "OK" } } },
+    "/componentes-evaluativos/{id}": {
+      "get": {
+        "tags": ["Evaluaciones"],
+        "summary": "Obtener componente evaluativo por Id",
+        "operationId": "obtenerComponenteEvaluativoPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (COM_EVA_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Componente encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ComponenteEvaluativo" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/componentes-evaluativos/{uuid}": {
+      "put": {
+        "tags": ["Evaluaciones"],
+        "summary": "Actualizar componente evaluativo",
+        "operationId": "actualizarComponenteEvaluativo",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (COM_EVA_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ComponenteEvaluativo" } } } },
+        "responses": {
+          "200": { "description": "Componente actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Evaluaciones"],
+        "summary": "Eliminar componente evaluativo",
+        "operationId": "eliminarComponenteEvaluativo",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (COM_EVA_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Componente eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/actividades-evaluativas": {
+      "get": {
+        "tags": ["Evaluaciones"],
+        "summary": "Listar actividades evaluativas",
+        "operationId": "listarActividadesEvaluativas",
+        "responses": {
+          "200": { "description": "Lista de actividades evaluativas.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ActividadEvaluativa" } } } } }
+        }
+      },
       "post": {
         "tags": ["Evaluaciones"],
         "summary": "Crear actividad evaluativa",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "act_nombre": { "type": "string" }, "act_porcentaje": { "type": "number" }, "com_eval_id": { "type": "integer" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Requiere una asignación académica (`ACT_EVA_ASIG_ACA_ID`) y un componente evaluativo (`ACT_EVA_COM_EVA_ID`).",
+        "operationId": "crearActividadEvaluativa",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ActividadEvaluativa" } } } },
+        "responses": {
+          "201": { "description": "Actividad creada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
       }
     },
-    "/resultado-evaluativo": {
-      "get": { "tags": ["Evaluaciones"], "summary": "Listar resultados evaluativos", "responses": { "200": { "description": "OK" } } },
+    "/actividades-evaluativas/{id}": {
+      "get": {
+        "tags": ["Evaluaciones"],
+        "summary": "Obtener actividad evaluativa por Id",
+        "operationId": "obtenerActividadEvaluativaPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (ACT_EVA_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Actividad encontrada.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ActividadEvaluativa" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/actividades-evaluativas/{uuid}": {
+      "put": {
+        "tags": ["Evaluaciones"],
+        "summary": "Actualizar actividad evaluativa",
+        "operationId": "actualizarActividadEvaluativa",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ACT_EVA_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ActividadEvaluativa" } } } },
+        "responses": {
+          "200": { "description": "Actividad actualizada exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Evaluaciones"],
+        "summary": "Eliminar actividad evaluativa",
+        "operationId": "eliminarActividadEvaluativa",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (ACT_EVA_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Actividad eliminada exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/resultados-evaluativos": {
+      "get": {
+        "tags": ["Evaluaciones"],
+        "summary": "Listar resultados evaluativos",
+        "operationId": "listarResultadosEvaluativos",
+        "responses": {
+          "200": { "description": "Lista de resultados evaluativos.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ResultadoEvaluativo" } } } } }
+        }
+      },
       "post": {
         "tags": ["Evaluaciones"],
         "summary": "Registrar resultado evaluativo",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "est_id": { "type": "integer" }, "act_eval_id": { "type": "integer" }, "res_nota": { "type": "number" } } } } } },
-        "responses": { "201": { "description": "Creado" } }
+        "description": "Requiere una materia (`RES_EVA_MAT_ID`) y una actividad evaluativa (`RES_EVA_ACT_EVA_ID`).",
+        "operationId": "crearResultadoEvaluativo",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultadoEvaluativo" } } } },
+        "responses": {
+          "201": { "description": "Resultado registrado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ErrorServidor" }
+        }
+      }
+    },
+    "/resultados-evaluativos/{id}": {
+      "get": {
+        "tags": ["Evaluaciones"],
+        "summary": "Obtener resultado evaluativo por Id",
+        "operationId": "obtenerResultadoEvaluativoPorId",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Id numérico (RES_EVA_ID).", "schema": { "type": "integer", "example": 1 } }],
+        "responses": {
+          "200": { "description": "Resultado encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultadoEvaluativo" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/resultados-evaluativos/{uuid}": {
+      "put": {
+        "tags": ["Evaluaciones"],
+        "summary": "Actualizar resultado evaluativo",
+        "operationId": "actualizarResultadoEvaluativo",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (RES_EVA_UUID).", "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultadoEvaluativo" } } } },
+        "responses": {
+          "200": { "description": "Resultado actualizado exitosamente." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Evaluaciones"],
+        "summary": "Eliminar resultado evaluativo",
+        "operationId": "eliminarResultadoEvaluativo",
+        "parameters": [{ "name": "uuid", "in": "path", "required": true, "description": "UUID (RES_EVA_UUID).", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Resultado eliminado exitosamente." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": { "mensaje": { "type": "string", "example": "Rol no encontrado" } }
+      },
+      "Persona": {
+        "type": "object",
+        "description": "Persona registrada en el sistema. Es la base de estudiantes y docentes.",
+        "properties": {
+          "PER_ID": { "type": "integer", "readOnly": true, "description": "Id autogenerado.", "example": 1 },
+          "PER_UUID": { "type": "string", "readOnly": true, "description": "UUID autogenerado (sin guiones).", "example": "9f8c1b2a3d4e4f5a6b7c8d9e0f1a2b3c" },
+          "PER_TIPO_DOCUMENTO": { "type": "string", "description": "Tipo de documento (CC, TI, RC, CE, PA).", "example": "TI" },
+          "PER_NUMERO_DOCUMENTO": { "type": "string", "description": "Número de documento.", "example": "1020304050" },
+          "PER_PRIMER_NOMBRE": { "type": "string", "example": "Ana" },
+          "PER_SEGUNDO_NOMBRE": { "type": "string", "description": "Opcional.", "example": "María" },
+          "PER_PRIMER_APELLIDO": { "type": "string", "example": "Gómez" },
+          "PER_SEGUNDO_APELLIDO": { "type": "string", "description": "Opcional.", "example": "Pérez" },
+          "PER_CORREO_INSTITUCIONAL": { "type": "string", "format": "email", "example": "ana.gomez@cmm.edu.co" },
+          "PER_FECHA_NACIMIENTO": { "type": "string", "format": "date", "description": "Formato YYYY-MM-DD.", "example": "2010-05-14" },
+          "PER_ROL_ID": { "type": "integer", "description": "Id del rol asociado (ROL_ID).", "example": 1 }
+        },
+        "required": ["PER_TIPO_DOCUMENTO", "PER_NUMERO_DOCUMENTO", "PER_PRIMER_NOMBRE", "PER_PRIMER_APELLIDO", "PER_CORREO_INSTITUCIONAL", "PER_FECHA_NACIMIENTO", "PER_ROL_ID"]
+      },
+      "Rol": {
+        "type": "object",
+        "properties": {
+          "ROL_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "ROL_UUID": { "type": "string", "readOnly": true },
+          "ROL_NOMBRE": { "type": "string", "description": "Nombre del rol (ej. Estudiante, Docente, Acudiente).", "example": "Estudiante" }
+        },
+        "required": ["ROL_NOMBRE"]
+      },
+      "Estudiante": {
+        "type": "object",
+        "properties": {
+          "EST_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "EST_UUID": { "type": "string", "readOnly": true },
+          "EST_ESTADO_INSTITUCIONAL": { "type": "string", "description": "Estado del estudiante.", "example": "ACTIVO" },
+          "EST_PER_ID": { "type": "integer", "description": "Id de la persona asociada (PER_ID).", "example": 1 }
+        },
+        "required": ["EST_ESTADO_INSTITUCIONAL", "EST_PER_ID"]
+      },
+      "Docente": {
+        "type": "object",
+        "properties": {
+          "DOC_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "DOC_UUID": { "type": "string", "readOnly": true },
+          "DOC_ESTADO": { "type": "string", "description": "Estado del docente.", "example": "ACTIVO" },
+          "DOC_PER_ID": { "type": "integer", "description": "Id de la persona asociada (PER_ID).", "example": 2 }
+        },
+        "required": ["DOC_ESTADO", "DOC_PER_ID"]
+      },
+      "Acudiente": {
+        "type": "object",
+        "properties": {
+          "ACU_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "ACU_UUID": { "type": "string", "readOnly": true },
+          "ACU_NOMBRES": { "type": "string", "example": "Carlos" },
+          "ACU_APELLIDOS": { "type": "string", "example": "Gómez Pérez" },
+          "ACU_ESTADO": { "type": "string", "example": "ACTIVO" }
+        },
+        "required": ["ACU_NOMBRES", "ACU_APELLIDOS", "ACU_ESTADO"]
+      },
+      "AcudienteCorreo": {
+        "type": "object",
+        "properties": {
+          "ACU_CORR_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "ACU_CORR_UUID": { "type": "string", "readOnly": true },
+          "ACU_CORR_ACU_ID": { "type": "integer", "description": "Id del acudiente (ACU_ID).", "example": 1 },
+          "ACU_CORR_CORREO": { "type": "string", "format": "email", "example": "carlos.gomez@gmail.com" }
+        },
+        "required": ["ACU_CORR_ACU_ID", "ACU_CORR_CORREO"]
+      },
+      "AcudienteTelefono": {
+        "type": "object",
+        "properties": {
+          "ACU_TEL_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "ACU_TEL_UUID": { "type": "string", "readOnly": true },
+          "ACU_TEL_ACU_ID": { "type": "integer", "description": "Id del acudiente (ACU_ID).", "example": 1 },
+          "ACU_TEL_NUMERO": { "type": "string", "example": "3001234567" }
+        },
+        "required": ["ACU_TEL_ACU_ID", "ACU_TEL_NUMERO"]
+      },
+      "AcudienteEstudiante": {
+        "type": "object",
+        "properties": {
+          "ACU_EST_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "ACU_EST_UUID": { "type": "string", "readOnly": true },
+          "ACU_EST_PARENTESCO": { "type": "string", "example": "Padre" },
+          "ACU_EST_ACU_ID": { "type": "integer", "description": "Id del acudiente (ACU_ID).", "example": 1 },
+          "ACU_EST_EST_ID": { "type": "integer", "description": "Id del estudiante (EST_ID).", "example": 1 },
+          "ACU_EST_ESPRINCIPAL": { "type": "boolean", "description": "Indica si es el acudiente principal.", "example": true }
+        },
+        "required": ["ACU_EST_PARENTESCO", "ACU_EST_ACU_ID", "ACU_EST_EST_ID", "ACU_EST_ESPRINCIPAL"]
+      },
+      "NivelEducativo": {
+        "type": "object",
+        "properties": {
+          "NIV_EDUC_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "NIV_EDUC_UUID": { "type": "string", "readOnly": true },
+          "NIV_EDUC_NOMBRE": { "type": "string", "description": "Ej. Preescolar, Primaria, Bachillerato.", "example": "Bachillerato" }
+        },
+        "required": ["NIV_EDUC_NOMBRE"]
+      },
+      "Grado": {
+        "type": "object",
+        "properties": {
+          "GRAD_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "GRAD_UUID": { "type": "string", "readOnly": true },
+          "GRAD_NOMBRE": { "type": "string", "example": "6" },
+          "GRAD_NIV_EDUC_ID": { "type": "integer", "description": "Id del nivel educativo (NIV_EDUC_ID).", "example": 1 }
+        },
+        "required": ["GRAD_NOMBRE", "GRAD_NIV_EDUC_ID"]
+      },
+      "Materia": {
+        "type": "object",
+        "properties": {
+          "MAT_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "MAT_UUID": { "type": "string", "readOnly": true },
+          "MAT_NOMBRE": { "type": "string", "example": "Matemáticas" }
+        },
+        "required": ["MAT_NOMBRE"]
+      },
+      "Vigencia": {
+        "type": "object",
+        "properties": {
+          "VIG_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "VIG_UUID": { "type": "string", "readOnly": true },
+          "VIG_AÑO": { "type": "integer", "description": "Año lectivo.", "example": 2026 }
+        },
+        "required": ["VIG_AÑO"]
+      },
+      "PeriodoAcademico": {
+        "type": "object",
+        "properties": {
+          "PER_ACA_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "PER_ACA_UUID": { "type": "string", "readOnly": true },
+          "PER_ACA_NUMERO": { "type": "integer", "description": "Número del periodo (1, 2, 3...).", "example": 1 },
+          "PER_ACA_FECHA_INICIO": { "type": "string", "format": "date", "example": "2026-01-20" },
+          "PER_ACA_FECHA_FIN": { "type": "string", "format": "date", "example": "2026-04-10" },
+          "PER_ACA_VIG_ID": { "type": "integer", "description": "Id de la vigencia (VIG_ID).", "example": 1 }
+        },
+        "required": ["PER_ACA_NUMERO", "PER_ACA_FECHA_INICIO", "PER_ACA_FECHA_FIN", "PER_ACA_VIG_ID"]
+      },
+      "CursoVigencia": {
+        "type": "object",
+        "properties": {
+          "CUR_VIG_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "CUR_VIG_UUID": { "type": "string", "readOnly": true },
+          "CUR_VIG_LETRA": { "type": "string", "description": "Letra o identificador del curso.", "example": "A" },
+          "CUR_VIG_VIG_ID": { "type": "integer", "description": "Id de la vigencia (VIG_ID).", "example": 1 },
+          "CUR_VIG_GRAD_ID": { "type": "integer", "description": "Id del grado (GRAD_ID).", "example": 1 }
+        },
+        "required": ["CUR_VIG_LETRA", "CUR_VIG_VIG_ID", "CUR_VIG_GRAD_ID"]
+      },
+      "Matricula": {
+        "type": "object",
+        "properties": {
+          "MATR_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "MATR_UUID": { "type": "string", "readOnly": true },
+          "MATR_EST_ID": { "type": "integer", "description": "Id del estudiante (EST_ID).", "example": 1 },
+          "MATR_CUR_VIG_ID": { "type": "integer", "description": "Id del curso por vigencia (CUR_VIG_ID).", "example": 1 }
+        },
+        "required": ["MATR_EST_ID", "MATR_CUR_VIG_ID"]
+      },
+      "DiaSemana": {
+        "type": "object",
+        "properties": {
+          "DIA_SEM_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "DIA_SEM_UUID": { "type": "string", "readOnly": true },
+          "DIA_SEM_DIA": { "type": "string", "description": "Nombre del día.", "example": "Lunes" }
+        },
+        "required": ["DIA_SEM_DIA"]
+      },
+      "AsignacionAcademica": {
+        "type": "object",
+        "properties": {
+          "ASIG_ACA_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "ASIG_ACA_UUID": { "type": "string", "readOnly": true },
+          "ASIG_ACA_ESTADO": { "type": "string", "example": "ACTIVO" },
+          "ASIG_ACA_DOC_ID": { "type": "integer", "description": "Id del docente (DOC_ID).", "example": 1 },
+          "ASIG_ACA_MAT_ID": { "type": "integer", "description": "Id de la materia (MAT_ID).", "example": 1 },
+          "ASIG_ACA_CUR_VIG_ID": { "type": "integer", "description": "Id del curso por vigencia (CUR_VIG_ID).", "example": 1 }
+        },
+        "required": ["ASIG_ACA_ESTADO", "ASIG_ACA_DOC_ID", "ASIG_ACA_MAT_ID", "ASIG_ACA_CUR_VIG_ID"]
+      },
+      "DetalleHorario": {
+        "type": "object",
+        "properties": {
+          "DET_HOR_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "DET_HOR_UUID": { "type": "string", "readOnly": true },
+          "DET_HOR_ASIG_ACA_ID": { "type": "integer", "description": "Id de la asignación académica (ASIG_ACA_ID).", "example": 1 },
+          "DET_HOR_DIA_SEM_ID": { "type": "integer", "description": "Id del día de la semana (DIA_SEM_ID).", "example": 1 },
+          "DET_HOR_HORA_INICIO": { "type": "string", "description": "Hora de inicio en formato HH:MM:SS.", "example": "07:00:00" },
+          "DET_HOR_HORA_FIN": { "type": "string", "description": "Hora de fin en formato HH:MM:SS.", "example": "08:00:00" }
+        },
+        "required": ["DET_HOR_ASIG_ACA_ID", "DET_HOR_DIA_SEM_ID", "DET_HOR_HORA_INICIO", "DET_HOR_HORA_FIN"]
+      },
+      "TipoComponente": {
+        "type": "object",
+        "properties": {
+          "TIPO_COMP_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "TIPO_COMP_UUID": { "type": "string", "readOnly": true },
+          "TIPO_COMP_NOMBRE": { "type": "string", "example": "Cognitivo" }
+        },
+        "required": ["TIPO_COMP_NOMBRE"]
+      },
+      "ComponenteEvaluativo": {
+        "type": "object",
+        "properties": {
+          "COM_EVA_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "COM_EVA_UUID": { "type": "string", "readOnly": true },
+          "COM_EVA_PORCENTAJE": { "type": "number", "description": "Porcentaje del componente.", "example": 30 },
+          "COM_EVA_PER_ACA_ID": { "type": "integer", "description": "Id del periodo académico (PER_ACA_ID).", "example": 1 },
+          "COM_EVA_TIPO_COMP_ID": { "type": "integer", "description": "Id del tipo de componente (TIPO_COMP_ID).", "example": 1 }
+        },
+        "required": ["COM_EVA_PORCENTAJE", "COM_EVA_PER_ACA_ID", "COM_EVA_TIPO_COMP_ID"]
+      },
+      "ActividadEvaluativa": {
+        "type": "object",
+        "properties": {
+          "ACT_EVA_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "ACT_EVA_UUID": { "type": "string", "readOnly": true },
+          "ACT_EVA_NOMBRE": { "type": "string", "example": "Taller 1" },
+          "ACT_EVA_DESCRIPCION": { "type": "string", "example": "Taller de refuerzo sobre ecuaciones." },
+          "ACT_EVA_ASIG_ACA_ID": { "type": "integer", "description": "Id de la asignación académica (ASIG_ACA_ID).", "example": 1 },
+          "ACT_EVA_COM_EVA_ID": { "type": "integer", "description": "Id del componente evaluativo (COM_EVA_ID).", "example": 1 }
+        },
+        "required": ["ACT_EVA_NOMBRE", "ACT_EVA_DESCRIPCION", "ACT_EVA_ASIG_ACA_ID", "ACT_EVA_COM_EVA_ID"]
+      },
+      "ResultadoEvaluativo": {
+        "type": "object",
+        "properties": {
+          "RES_EVA_ID": { "type": "integer", "readOnly": true, "example": 1 },
+          "RES_EVA_UUID": { "type": "string", "readOnly": true },
+          "RES_EVA_NOTA": { "type": "number", "description": "Nota obtenida.", "example": 4.5 },
+          "RES_EVA_AJUSTE": { "type": "number", "description": "Ajuste aplicado a la nota.", "example": 0 },
+          "RES_EVA_OBSERVACION": { "type": "string", "example": "Buen desempeño." },
+          "RES_EVA_MAT_ID": { "type": "integer", "description": "Id de la materia (MAT_ID).", "example": 1 },
+          "RES_EVA_ACT_EVA_ID": { "type": "integer", "description": "Id de la actividad evaluativa (ACT_EVA_ID).", "example": 1 }
+        },
+        "required": ["RES_EVA_NOTA", "RES_EVA_AJUSTE", "RES_EVA_OBSERVACION", "RES_EVA_MAT_ID", "RES_EVA_ACT_EVA_ID"]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Faltan campos requeridos en el cuerpo de la petición.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" }, "example": { "mensaje": "Faltan campos requeridos" } } }
+      },
+      "NotFound": {
+        "description": "El recurso solicitado no existe.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" }, "example": { "mensaje": "Recurso no encontrado" } } }
+      },
+      "ErrorServidor": {
+        "description": "Error inesperado del servidor (por ejemplo, llave foránea inexistente).",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" }, "example": { "mensaje": "No se pudo crear el registro" } } }
       }
     }
   }
